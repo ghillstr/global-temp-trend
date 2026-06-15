@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Global Temperature Trend 1880–2023</title>
+  <title>Global Daily Temperature Trend</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,7 +45,7 @@
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1rem;
       width: 100%;
-      max-width: 900px;
+      max-width: 1000px;
       margin-bottom: 1.5rem;
     }
 
@@ -67,7 +67,7 @@
     }
 
     .stat-card .value {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 700;
     }
 
@@ -79,24 +79,27 @@
     .hot  { color: #f87171; }
     .warm { color: #fb923c; }
     .rise { color: #fbbf24; }
+    .cool { color: #60a5fa; }
 
     .controls {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.2rem;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
       flex-wrap: wrap;
       justify-content: center;
+      width: 100%;
+      max-width: 1000px;
     }
 
     .toggle-btn {
       background: #161b22;
       border: 1px solid #30363d;
       color: #e6edf3;
-      padding: 0.5rem 1.2rem;
+      padding: 0.45rem 1rem;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       transition: background 0.2s, border-color 0.2s;
     }
 
@@ -104,6 +107,31 @@
       background: #21262d;
       border-color: #58a6ff;
       color: #58a6ff;
+    }
+
+    .range-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      color: #8b949e;
+    }
+
+    .range-control select {
+      background: transparent;
+      border: none;
+      color: #e6edf3;
+      font-size: 0.82rem;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .range-control select option {
+      background: #1c2128;
     }
 
     .legend {
@@ -123,16 +151,47 @@
 
     .chart-wrapper {
       width: 100%;
-      max-width: 900px;
+      max-width: 1000px;
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 16px;
       padding: 1.5rem;
       position: relative;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     canvas {
       width: 100% !important;
+    }
+
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      color: #f87171;
+      text-align: center;
+      font-size: 0.88rem;
+      padding: 1rem;
     }
 
     footer {
@@ -140,10 +199,11 @@
       font-size: 0.75rem;
       color: #484f58;
       text-align: center;
+      max-width: 700px;
     }
 
     @media (max-width: 480px) {
-      .stat-card .value { font-size: 1.3rem; }
+      .stat-card .value { font-size: 1.2rem; }
       .chart-wrapper { padding: 1rem 0.5rem; }
     }
   </style>
@@ -151,15 +211,26 @@
 <body>
 
 <header>
-  <h1>Global Temperature Anomaly</h1>
-  <p>NASA GISS Land-Ocean Temperature Index &mdash; relative to 1951–1980 baseline</p>
+  <h1>Global Daily Temperature Trend</h1>
+  <p>ERA5 Reanalysis &mdash; Daily global mean 2m air temperature &mdash; anomaly vs 1991&ndash;2020 baseline</p>
 </header>
 
-<div class="stats-grid" id="statsGrid"></div>
+<div class="stats-grid" id="statsGrid">
+  <div class="stat-card"><span class="label">Status</span><span class="value cool">Loading…</span><span class="sub">Fetching ERA5 data</span></div>
+</div>
 
-<div class="controls">
-  <button class="toggle-btn active" id="btnAnnual" onclick="setMode('annual')">Annual Data</button>
-  <button class="toggle-btn" id="btnDecade" onclick="setMode('decade')">Decade Average</button>
+<div class="controls" id="controls" style="display:none">
+  <button class="toggle-btn active" id="btnDaily"  onclick="setView('daily')">Daily</button>
+  <button class="toggle-btn"        id="btnSmooth" onclick="setView('smooth')">30-Day Average</button>
+  <button class="toggle-btn active" id="btnAnomaly" onclick="toggleMode()">Anomaly (°C)</button>
+
+  <div class="range-control">
+    From
+    <select id="selFrom" onchange="applyRange()"></select>
+    to
+    <select id="selTo"   onchange="applyRange()"></select>
+  </div>
+
   <div class="legend">
     <span>Cold</span>
     <div class="legend-bar"></div>
@@ -167,55 +238,184 @@
   </div>
 </div>
 
-<div class="chart-wrapper">
-  <canvas id="tempChart"></canvas>
+<div class="chart-wrapper" id="chartWrapper">
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <span>Fetching ~30,000 daily temperature records…</span>
+  </div>
+  <canvas id="tempChart" style="display:none"></canvas>
 </div>
 
 <footer>
-  Data: NASA Goddard Institute for Space Studies (GISS) Surface Temperature Analysis (GISTEMP v4).<br>
-  Trend line computed via linear regression.
+  Data: ERA5 global reanalysis via University of Maine Climate Reanalyzer
+  (climatereanalyzer.org). Anomaly computed relative to 1991–2020 daily mean baseline.
+  Trend line = 30-day rolling average. Chart.js LTTB decimation applied at full zoom.
 </footer>
 
 <script>
-// ── NASA GISS annual mean anomalies (°C, 1951-1980 baseline) ──
-const RAW = {
-  1880:-0.16,1881:-0.08,1882:-0.11,1883:-0.17,1884:-0.28,1885:-0.33,1886:-0.31,1887:-0.36,1888:-0.27,1889:-0.17,
-  1890:-0.35,1891:-0.22,1892:-0.27,1893:-0.31,1894:-0.32,1895:-0.23,1896:-0.11,1897:-0.11,1898:-0.27,1899:-0.17,
-  1900:-0.08,1901:-0.15,1902:-0.28,1903:-0.37,1904:-0.47,1905:-0.26,1906:-0.22,1907:-0.39,1908:-0.43,1909:-0.48,
-  1910:-0.43,1911:-0.44,1912:-0.36,1913:-0.35,1914:-0.15,1915:-0.14,1916:-0.36,1917:-0.46,1918:-0.30,1919:-0.27,
-  1920:-0.27,1921:-0.19,1922:-0.28,1923:-0.26,1924:-0.27,1925:-0.20,1926:-0.06,1927:-0.19,1928:-0.22,1929:-0.36,
-  1930:-0.08,1931:-0.08,1932:-0.10,1933:-0.27,1934:-0.13,1935:-0.19,1936:-0.13,1937:-0.01,1938:-0.01,1939:-0.02,
-  1940: 0.10,1941: 0.19,1942: 0.07,1943: 0.09,1944: 0.20,1945: 0.09,1946:-0.07,1947:-0.03,1948:-0.05,1949:-0.08,
-  1950:-0.16,1951: 0.01,1952: 0.02,1953: 0.08,1954:-0.13,1955:-0.14,1956:-0.14,1957: 0.05,1958: 0.06,1959: 0.03,
-  1960:-0.03,1961: 0.06,1962: 0.03,1963: 0.05,1964:-0.20,1965:-0.11,1966:-0.06,1967:-0.02,1968:-0.07,1969: 0.08,
-  1970: 0.04,1971:-0.08,1972: 0.01,1973: 0.16,1974:-0.07,1975:-0.01,1976:-0.10,1977: 0.18,1978: 0.07,1979: 0.16,
-  1980: 0.26,1981: 0.32,1982: 0.14,1983: 0.31,1984: 0.16,1985: 0.12,1986: 0.18,1987: 0.32,1988: 0.39,1989: 0.29,
-  1990: 0.45,1991: 0.41,1992: 0.22,1993: 0.24,1994: 0.31,1995: 0.45,1996: 0.35,1997: 0.46,1998: 0.63,1999: 0.40,
-  2000: 0.42,2001: 0.54,2002: 0.63,2003: 0.62,2004: 0.54,2005: 0.68,2006: 0.61,2007: 0.66,2008: 0.54,2009: 0.64,
-  2010: 0.72,2011: 0.61,2012: 0.64,2013: 0.68,2014: 0.75,2015: 0.87,2016: 1.01,2017: 0.92,2018: 0.83,2019: 0.98,
-  2020: 1.02,2021: 0.85,2022: 0.89,2023: 1.17
-};
+// ── Color helpers ──────────────────────────────────────────────────────────
+function anomalyColor(v) {
+  const t = Math.max(0, Math.min(1, (v + 1.0) / 2.5));
+  if (t < 0.5) {
+    const u = t / 0.5;
+    return `rgb(${Math.round(59+u*(163-59))},${Math.round(130+u*(230-130))},${Math.round(246-u*(246-53))})`;
+  }
+  const u = (t - 0.5) / 0.5;
+  return `rgb(${Math.round(163+u*(248-163))},${Math.round(230-u*(230-113))},${Math.round(53-u*53)})`;
+}
 
-const years = Object.keys(RAW).map(Number);
-const anomalies = years.map(y => RAW[y]);
+// ── Rolling average ────────────────────────────────────────────────────────
+function rolling(vals, window) {
+  const out = new Array(vals.length).fill(null);
+  const half = Math.floor(window / 2);
+  for (let i = half; i < vals.length - half; i++) {
+    let s = 0;
+    for (let j = i - half; j <= i + half; j++) s += vals[j];
+    out[i] = s / window;
+  }
+  return out;
+}
 
-// ── Stats ──
-const hottestYear = years[anomalies.indexOf(Math.max(...anomalies))];
-const hottestVal  = RAW[hottestYear];
-const latestYear  = years[years.length - 1];
-const latestVal   = RAW[latestYear];
-const firstVal    = RAW[years[0]];
-const totalWarm   = (latestVal - firstVal).toFixed(2);
+// ── Linear regression ──────────────────────────────────────────────────────
+function linReg(indices, vals) {
+  const n = indices.length;
+  let mx = 0, my = 0;
+  for (let i = 0; i < n; i++) { mx += indices[i]; my += vals[i]; }
+  mx /= n; my /= n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (indices[i] - mx) * (vals[i] - my);
+    den += (indices[i] - mx) ** 2;
+  }
+  const slope = num / den, intercept = my - slope * mx;
+  return indices.map(x => +(slope * x + intercept).toFixed(4));
+}
 
+// ── Global state ───────────────────────────────────────────────────────────
+let allDates = [], allTemps = [], allAnomalies = [], allSmooth = [], allSmoothAnom = [];
+let baseline = {}; // day-of-year (0-364) -> mean temp
+let chart = null;
+let viewMode = 'daily';   // 'daily' | 'smooth'
+let dataMode = 'anomaly'; // 'anomaly' | 'absolute'
+
+// ── Fetch & parse ──────────────────────────────────────────────────────────
+async function loadData() {
+  const url = 'https://climatereanalyzer.org/clim/t2_daily/json/era5_world_t2_day.json';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+
+  // json is array of {name: "1940", data: [float|null, ...]} (365/366 values per year)
+  const dates = [], temps = [];
+  for (const yr of json) {
+    const y = parseInt(yr.name);
+    if (isNaN(y)) continue;
+    yr.data.forEach((v, i) => {
+      if (v === null) return;
+      const d = dayToDate(y, i);
+      if (!d) return;
+      dates.push(d);
+      temps.push(v);
+    });
+  }
+
+  allDates = dates;
+  allTemps = temps;
+
+  // Compute 1991-2020 baseline per calendar day-of-year
+  const buckets = {};
+  dates.forEach((d, i) => {
+    const y = parseInt(d.slice(0, 4));
+    if (y < 1991 || y > 2020) return;
+    const doy = dayOfYear(d);
+    if (!buckets[doy]) buckets[doy] = [];
+    buckets[doy].push(temps[i]);
+  });
+  for (const doy in buckets) {
+    baseline[doy] = buckets[doy].reduce((a, b) => a + b, 0) / buckets[doy].length;
+  }
+
+  // Smooth baseline with 15-day window to avoid step artifacts
+  const doys = Object.keys(baseline).map(Number).sort((a,b)=>a-b);
+  const smoothBase = {};
+  doys.forEach(doy => {
+    let s = 0, c = 0;
+    for (let d2 = doy - 7; d2 <= doy + 7; d2++) {
+      const k = ((d2 - 1 + 366) % 366) + 1;
+      if (baseline[k] !== undefined) { s += baseline[k]; c++; }
+    }
+    smoothBase[doy] = c > 0 ? s / c : baseline[doy];
+  });
+
+  allAnomalies = dates.map((d, i) => {
+    const doy = dayOfYear(d);
+    return smoothBase[doy] !== undefined ? +(temps[i] - smoothBase[doy]).toFixed(3) : null;
+  });
+
+  allSmooth     = rolling(temps, 30);
+  allSmoothAnom = rolling(allAnomalies.map(v => v ?? 0), 30);
+
+  return dates;
+}
+
+function dayToDate(year, idx) {
+  const d = new Date(Date.UTC(year, 0, 1));
+  d.setUTCDate(d.getUTCDate() + idx);
+  if (d.getUTCFullYear() !== year) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+function dayOfYear(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.floor((d - start) / 86400000) + 1;
+}
+
+// ── Year selectors ─────────────────────────────────────────────────────────
+function buildSelectors() {
+  const years = [...new Set(allDates.map(d => d.slice(0, 4)))].sort();
+  const from = document.getElementById('selFrom');
+  const to   = document.getElementById('selTo');
+  years.forEach(y => {
+    from.appendChild(new Option(y, y));
+    to.appendChild(new Option(y, y));
+  });
+  from.value = years[0];
+  to.value   = years[years.length - 1];
+}
+
+function selectedRange() {
+  const y1 = parseInt(document.getElementById('selFrom').value);
+  const y2 = parseInt(document.getElementById('selTo').value);
+  return [Math.min(y1, y2), Math.max(y1, y2)];
+}
+
+function applyRange() { renderChart(); }
+
+// ── Stats cards ────────────────────────────────────────────────────────────
 function renderStats() {
+  const validAnom = allAnomalies.map((v,i) => ({v, d: allDates[i]})).filter(x => x.v !== null);
+  const maxA = validAnom.reduce((a,b) => b.v > a.v ? b : a);
+  const minA = validAnom.reduce((a,b) => b.v < a.v ? b : a);
+
+  // Latest 30-day average anomaly (last entry of smoothed anomaly that's not null)
+  const lastSmooth = [...allSmoothAnom].reverse().find(v => v !== null);
+  const lastDate = allDates[allDates.length - 1];
+
+  // Decadal trend: compare first decade avg vs last decade avg anomaly
+  const first = validAnom.filter(x => x.d.slice(0,4) >= '1940' && x.d.slice(0,4) <= '1949');
+  const last  = validAnom.filter(x => x.d >= allDates[allDates.length - 1].slice(0,4) - 9);
+  const avgFirst = first.reduce((a,b)=>a+b.v,0)/first.length;
+  const avgLast  = last.reduce((a,b)=>a+b.v,0)/last.length;
+  const totalRise = (avgLast - avgFirst).toFixed(2);
+
   const g = document.getElementById('statsGrid');
-  const cards = [
-    { label: 'Hottest Year on Record', value: hottestYear, sub: `+${hottestVal.toFixed(2)} °C anomaly`, cls: 'hot' },
-    { label: 'Latest Anomaly (2023)',  value: `+${latestVal.toFixed(2)} °C`, sub: 'above 1951–1980 baseline', cls: 'warm' },
-    { label: 'Total Warming Since 1880', value: `+${totalWarm} °C`, sub: 'net change 1880 → 2023', cls: 'rise' },
-    { label: 'Years Analyzed', value: years.length, sub: '1880 – 2023', cls: '' },
-  ];
-  g.innerHTML = cards.map(c => `
+  g.innerHTML = [
+    { label: 'Hottest Day on Record',   value: maxA.d, sub: `+${maxA.v.toFixed(2)} °C anomaly`, cls: 'hot' },
+    { label: 'Coldest Day on Record',   value: minA.d, sub: `${minA.v.toFixed(2)} °C anomaly`, cls: 'cool' },
+    { label: `Recent 30-Day Avg Anom.`, value: lastSmooth !== null ? `${lastSmooth >= 0 ? '+' : ''}${lastSmooth.toFixed(2)} °C` : '—', sub: `as of ${lastDate}`, cls: 'warm' },
+    { label: 'Warming Since 1940s',     value: `+${totalRise} °C`, sub: 'avg anomaly: 1940s vs recent decade', cls: 'rise' },
+  ].map(c => `
     <div class="stat-card">
       <span class="label">${c.label}</span>
       <span class="value ${c.cls}">${c.value}</span>
@@ -223,122 +423,102 @@ function renderStats() {
     </div>`).join('');
 }
 
-// ── Color gradient helpers ──
-function anomalyToColor(val) {
-  // map roughly -0.5 -> blue, 0 -> green-ish, +1.2 -> red
-  const t = Math.max(0, Math.min(1, (val + 0.5) / 1.7));
-  if (t < 0.5) {
-    const u = t / 0.5;
-    const r = Math.round(59  + u * (163 - 59));
-    const g = Math.round(130 + u * (230 - 130));
-    const b = Math.round(246 - u * (246 - 53));
-    return `rgb(${r},${g},${b})`;
-  } else {
-    const u = (t - 0.5) / 0.5;
-    const r = Math.round(163 + u * (248 - 163));
-    const g = Math.round(230 - u * (230 - 113));
-    const b = Math.round(53  - u * 53);
-    return `rgb(${r},${g},${b})`;
-  }
-}
+// ── Chart render ───────────────────────────────────────────────────────────
+function renderChart() {
+  const [y1, y2] = selectedRange();
+  const isAnom = dataMode === 'anomaly';
 
-// ── Linear regression ──
-function linReg(xs, ys) {
-  const n = xs.length;
-  const mx = xs.reduce((a,b) => a+b, 0) / n;
-  const my = ys.reduce((a,b) => a+b, 0) / n;
-  let num = 0, den = 0;
-  for (let i = 0; i < n; i++) { num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)**2; }
-  const slope = num / den;
-  const intercept = my - slope * mx;
-  return xs.map(x => +(slope * x + intercept).toFixed(4));
-}
-
-// ── Decade averages ──
-function decadeData() {
-  const buckets = {};
-  years.forEach(y => {
-    const d = Math.floor(y / 10) * 10;
-    if (!buckets[d]) buckets[d] = [];
-    buckets[d].push(RAW[y]);
+  // Filter to range
+  const indices = [];
+  allDates.forEach((d, i) => {
+    const y = parseInt(d.slice(0, 4));
+    if (y >= y1 && y <= y2) indices.push(i);
   });
-  const dYears = Object.keys(buckets).map(Number).sort((a,b)=>a-b);
-  const dVals  = dYears.map(d => +(buckets[d].reduce((a,b)=>a+b,0)/buckets[d].length).toFixed(3));
-  return { dYears, dVals };
-}
 
-// ── Chart ──
-let chart;
+  const labels = indices.map(i => allDates[i]);
+  const daily  = indices.map(i => isAnom ? allAnomalies[i] : allTemps[i]);
+  const smooth = indices.map(i => isAnom ? allSmoothAnom[i] : allSmooth[i]);
 
-function buildGradient(ctx, chartArea, vals, xs) {
-  const grad = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-  vals.forEach((v, i) => {
-    const stop = i / (vals.length - 1);
-    grad.addColorStop(stop, anomalyToColor(v));
+  // Long-term linear trend from smooth data (non-null points only)
+  const trendX = [], trendY = [];
+  smooth.forEach((v, i) => { if (v !== null) { trendX.push(i); trendY.push(v); } });
+  const trendFull = linReg(trendX, trendY);
+  const trendData = smooth.map((v, i) => {
+    const idx = trendX.indexOf(i);
+    return idx >= 0 ? trendFull[idx] : null;
   });
-  return grad;
-}
 
-function buildChart(mode) {
-  let labels, data, trendData;
-  if (mode === 'annual') {
-    labels = years;
-    data   = anomalies;
-    trendData = linReg(years, anomalies);
-  } else {
-    const { dYears, dVals } = decadeData();
-    labels = dYears;
-    data   = dVals;
-    trendData = linReg(dYears, dVals);
-  }
+  const showDaily  = viewMode === 'daily';
+  const pointColors = daily.map(v => anomalyColor(isAnom ? v : (v - 14)));
+
+  const yLabel = isAnom ? 'Temperature Anomaly (°C vs 1991–2020)' : 'Temperature (°C)';
+
+  const datasets = [
+    {
+      label: isAnom ? 'Daily Anomaly (°C)' : 'Daily Temperature (°C)',
+      data: daily,
+      borderColor: 'rgba(96,165,250,0.35)',
+      borderWidth: 0.8,
+      pointRadius: 0,
+      fill: false,
+      tension: 0,
+      hidden: !showDaily,
+      order: 3,
+    },
+    {
+      label: '30-Day Rolling Average',
+      data: smooth,
+      borderColor: function(ctx) {
+        const ch = ctx.chart;
+        if (!ch.chartArea) return '#fb923c';
+        const grad = ch.ctx.createLinearGradient(ch.chartArea.left, 0, ch.chartArea.right, 0);
+        const nonNull = smooth.filter(v => v !== null);
+        const min = Math.min(...nonNull), max = Math.max(...nonNull);
+        smooth.forEach((v, i) => {
+          if (v === null) return;
+          const t = (v - min) / (max - min || 1);
+          grad.addColorStop(i / (smooth.length - 1), anomalyColor(isAnom ? v : (v - 14)));
+        });
+        return grad;
+      },
+      borderWidth: 2.5,
+      pointRadius: 0,
+      fill: false,
+      tension: 0.2,
+      order: 2,
+    },
+    {
+      label: 'Long-Term Trend',
+      data: trendData,
+      borderColor: 'rgba(250,204,21,0.8)',
+      borderWidth: 2,
+      borderDash: [8, 5],
+      pointRadius: 0,
+      fill: false,
+      tension: 0,
+      order: 1,
+    }
+  ];
 
   if (chart) chart.destroy();
 
   const ctx = document.getElementById('tempChart').getContext('2d');
-  const pointColors = data.map(v => anomalyToColor(v));
-
   chart = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: mode === 'annual' ? 'Annual Anomaly (°C)' : 'Decade Average (°C)',
-          data,
-          borderColor: function(context) {
-            const ch = context.chart;
-            const { ctx: c, chartArea } = ch;
-            if (!chartArea) return '#60a5fa';
-            return buildGradient(c, chartArea, data, labels);
-          },
-          borderWidth: mode === 'annual' ? 1.8 : 3,
-          pointBackgroundColor: pointColors,
-          pointBorderColor: pointColors,
-          pointRadius: mode === 'annual' ? 2.5 : 6,
-          pointHoverRadius: mode === 'annual' ? 5 : 9,
-          fill: false,
-          tension: 0.3,
-          order: 1,
-        },
-        {
-          label: 'Linear Trend',
-          data: trendData,
-          borderColor: 'rgba(250,204,21,0.75)',
-          borderWidth: 2,
-          borderDash: [6, 4],
-          pointRadius: 0,
-          fill: false,
-          tension: 0,
-          order: 2,
-        }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
+      animation: { duration: 300 },
       interaction: { mode: 'index', intersect: false },
       plugins: {
+        decimation: {
+          enabled: true,
+          algorithm: 'lttb',
+          samples: 800,
+          threshold: 800,
+        },
         legend: {
-          labels: { color: '#8b949e', font: { size: 12 }, boxWidth: 24 }
+          labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 24 }
         },
         tooltip: {
           backgroundColor: '#1c2128',
@@ -346,9 +526,12 @@ function buildChart(mode) {
           borderWidth: 1,
           titleColor: '#e6edf3',
           bodyColor: '#8b949e',
+          filter: item => item.parsed.y !== null,
           callbacks: {
+            title: items => items[0]?.label ?? '',
             label: ctx => {
               const v = ctx.parsed.y;
+              if (v === null) return null;
               const sign = v >= 0 ? '+' : '';
               return ` ${ctx.dataset.label}: ${sign}${v.toFixed(3)} °C`;
             }
@@ -357,23 +540,31 @@ function buildChart(mode) {
       },
       scales: {
         x: {
-          ticks: { color: '#8b949e', maxTicksLimit: 15, font: { size: 11 } },
-          grid:  { color: '#21262d' },
+          ticks: {
+            color: '#8b949e',
+            maxTicksLimit: 14,
+            font: { size: 10 },
+            callback(val, i) {
+              const lbl = this.getLabelForValue(val);
+              return lbl?.slice(0, 7); // YYYY-MM
+            }
+          },
+          grid:  { color: '#1e242c' },
           border: { color: '#30363d' }
         },
         y: {
           ticks: {
             color: '#8b949e',
-            font: { size: 11 },
-            callback: v => (v >= 0 ? '+' : '') + v.toFixed(2) + ' °C'
+            font: { size: 10 },
+            callback: v => (isAnom ? (v >= 0 ? '+' : '') + v.toFixed(2) + ' °C' : v.toFixed(1) + ' °C')
           },
-          grid:  { color: '#21262d' },
+          grid:  { color: '#1e242c' },
           border: { color: '#30363d' },
           title: {
             display: true,
-            text: 'Temperature Anomaly (°C)',
+            text: yLabel,
             color: '#484f58',
-            font: { size: 11 }
+            font: { size: 10 }
           }
         }
       }
@@ -381,14 +572,49 @@ function buildChart(mode) {
   });
 }
 
-function setMode(mode) {
-  document.getElementById('btnAnnual').classList.toggle('active', mode === 'annual');
-  document.getElementById('btnDecade').classList.toggle('active', mode === 'decade');
-  buildChart(mode);
+// ── Controls ───────────────────────────────────────────────────────────────
+function setView(mode) {
+  viewMode = mode;
+  document.getElementById('btnDaily').classList.toggle('active', mode === 'daily');
+  document.getElementById('btnSmooth').classList.toggle('active', mode === 'smooth');
+  if (chart) {
+    chart.data.datasets[0].hidden = mode !== 'daily';
+    chart.update();
+  }
 }
 
-renderStats();
-buildChart('annual');
+function toggleMode() {
+  dataMode = dataMode === 'anomaly' ? 'absolute' : 'anomaly';
+  const btn = document.getElementById('btnAnomaly');
+  btn.textContent = dataMode === 'anomaly' ? 'Anomaly (°C)' : 'Absolute (°C)';
+  btn.classList.toggle('active', dataMode === 'anomaly');
+  renderChart();
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    await loadData();
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('tempChart').style.display = 'block';
+    document.getElementById('controls').style.display = 'flex';
+    document.getElementById('chartWrapper').style.minHeight = '';
+    document.getElementById('chartWrapper').style.alignItems = '';
+
+    buildSelectors();
+    renderStats();
+    renderChart();
+  } catch (err) {
+    document.getElementById('loader').innerHTML = `
+      <div class="error-msg">
+        <strong>Could not load ERA5 data.</strong><br>
+        ${err.message}<br><br>
+        <small>This may be a CORS restriction when opening the file locally.<br>
+        Try serving via a local web server, or open in a browser that allows cross-origin requests.</small>
+      </div>`;
+  }
+})();
 </script>
 </body>
 </html>
