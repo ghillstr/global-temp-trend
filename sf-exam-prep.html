@@ -1,1031 +1,994 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Salesforce App Builder Exam Prep</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --blue: #58a6ff;
+      --green: #3fb950;
+      --red: #f87171;
+      --yellow: #f0a040;
+    }
+
     body {
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
       min-height: 100vh;
-      padding: 0;
+    }
+
+    #progress-bar-container {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--border);
+      z-index: 1000;
+    }
+    #progress-bar {
+      height: 100%;
+      background: var(--blue);
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
     }
 
     .screen { display: none; }
     .screen.active { display: block; }
 
-    /* ── HOME SCREEN ── */
-    #home-screen {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2.5rem 1rem 3rem;
+    /* HOME */
+    .home-header {
+      text-align: center;
+      margin-bottom: 36px;
+      padding-top: 16px;
     }
-
-    .home-header { text-align: center; margin-bottom: 2.5rem; }
     .home-header h1 {
-      font-size: clamp(1.5rem, 4vw, 2.4rem);
+      font-size: 2rem;
       font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #58a6ff, #3fb950);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.6rem;
+      color: var(--blue);
+      margin-bottom: 8px;
     }
-    .home-header p { color: #8b949e; font-size: 0.95rem; line-height: 1.6; }
-    .exam-facts {
-      display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;
-      margin-top: 1rem;
-    }
-    .fact-pill {
-      background: #161b22; border: 1px solid #30363d; border-radius: 20px;
-      padding: 0.3rem 0.9rem; font-size: 0.8rem; color: #8b949e;
-    }
-    .fact-pill span { color: #58a6ff; font-weight: 600; }
+    .home-header p { color: var(--muted); font-size: 1rem; }
 
-    .stats-grid {
+    .exam-info-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
     }
-    .stat-card {
-      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
-      padding: 1.1rem 1.3rem;
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
     }
-    .stat-card .label {
-      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
-      color: #8b949e; margin-bottom: 0.4rem;
-    }
-    .stat-card .value { font-size: 1.6rem; font-weight: 700; }
-    .stat-card .sub { font-size: 0.78rem; color: #8b949e; margin-top: 0.2rem; }
+    .info-card .value { font-size: 1.6rem; font-weight: 700; color: var(--blue); }
+    .info-card .label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
 
+    .topic-breakdown {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
     .section-label {
-      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
-      color: #8b949e; margin-bottom: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 12px;
+    }
+    .topic-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .topic-row:last-child { border-bottom: none; }
+    .topic-row .pct { color: var(--muted); }
+
+    .best-score-banner {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .best-score-banner .label { color: var(--muted); font-size: 0.9rem; }
+    .best-score-banner .score { color: var(--green); font-size: 1.3rem; font-weight: 700; }
+
+    .controls-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 20px;
     }
 
     .mode-toggle {
-      display: flex; gap: 0.5rem; margin-bottom: 2rem;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
     }
     .mode-btn {
-      flex: 1; padding: 0.8rem; border-radius: 10px; border: 1px solid #30363d;
-      background: #161b22; color: #8b949e; font-size: 0.95rem; cursor: pointer;
-      transition: all 0.15s; font-weight: 500;
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
     }
     .mode-btn.active {
-      background: #1f3a5c; border-color: #58a6ff; color: #58a6ff;
-    }
-    .mode-btn:hover:not(.active) { border-color: #8b949e; color: #e6edf3; }
-
-    .mode-desc {
-      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
-      padding: 0.9rem 1.1rem; font-size: 0.87rem; color: #8b949e;
-      margin-bottom: 2rem; line-height: 1.5;
-    }
-    .mode-desc strong { color: #e6edf3; }
-
-    .topic-filter-wrap { margin-bottom: 2rem; }
-    .topic-filter-wrap select {
-      width: 100%; padding: 0.75rem 1rem; border-radius: 10px;
-      border: 1px solid #30363d; background: #161b22; color: #e6edf3;
-      font-size: 0.95rem; cursor: pointer; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 1rem center;
-    }
-    .topic-filter-wrap select:focus { outline: none; border-color: #58a6ff; }
-
-    .start-btn {
-      width: 100%; padding: 1rem; border-radius: 12px; border: none;
-      background: linear-gradient(135deg, #1f6feb, #388bfd);
-      color: #fff; font-size: 1.05rem; font-weight: 600; cursor: pointer;
-      transition: opacity 0.15s; letter-spacing: 0.02em;
-    }
-    .start-btn:hover { opacity: 0.88; }
-
-    .topic-weights {
-      margin-top: 2rem; background: #161b22; border: 1px solid #30363d;
-      border-radius: 12px; padding: 1.2rem;
-    }
-    .topic-weight-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
-    .topic-weight-row:last-child { margin-bottom: 0; }
-    .tw-name { font-size: 0.83rem; color: #8b949e; min-width: 200px; }
-    .tw-bar-wrap { flex: 1; background: #0d1117; border-radius: 4px; height: 6px; }
-    .tw-bar { height: 6px; border-radius: 4px; background: #58a6ff; }
-    .tw-pct { font-size: 0.8rem; color: #58a6ff; font-weight: 600; min-width: 36px; text-align: right; }
-
-    /* ── QUIZ SCREEN ── */
-    #quiz-screen { max-width: 800px; margin: 0 auto; padding: 0 0 3rem; }
-
-    .quiz-progress-bar-wrap {
-      position: sticky; top: 0; z-index: 10;
-      background: #0d1117; padding: 0.5rem 1rem;
-      border-bottom: 1px solid #30363d;
-    }
-    .quiz-progress-bar-bg {
-      height: 4px; background: #161b22; border-radius: 4px; overflow: hidden;
-    }
-    .quiz-progress-bar-fill {
-      height: 4px; background: linear-gradient(90deg, #58a6ff, #3fb950);
-      border-radius: 4px; transition: width 0.3s ease;
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #0d1117;
+      font-weight: 600;
     }
 
+    .form-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 150px;
+    }
+    .form-group label { font-size: 0.85rem; color: var(--muted); }
+
+    select, input[type="number"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      width: 100%;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--blue); }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--blue); color: #0d1117; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-green { background: var(--green); color: #0d1117; }
+    .btn-green:hover { opacity: 0.88; }
+    .btn-full { width: 100%; }
+
+    /* QUIZ */
     .quiz-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 1rem 0.5rem; flex-wrap: wrap; gap: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-top: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .q-counter { font-size: 0.85rem; color: #8b949e; font-weight: 500; }
-    .topic-badge {
-      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
-      padding: 0.25rem 0.7rem; border-radius: 20px; font-weight: 600;
+    .quiz-counter { color: var(--muted); font-size: 0.9rem; }
+    .quiz-topic-badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      color: var(--blue);
     }
-    .badge-fundamentals { background: #1f3a5c; color: #58a6ff; }
-    .badge-ui { background: #2a1f5c; color: #a78bfa; }
-    .badge-data-model { background: #1f3d2e; color: #3fb950; }
-    .badge-automation { background: #3d2a1f; color: #fb923c; }
-    .badge-deployment { background: #3d1f2a; color: #f87171; }
-
     .timer-display {
-      font-size: 0.9rem; font-weight: 700; color: #58a6ff;
-      font-variant-numeric: tabular-nums; letter-spacing: 0.03em;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s;
     }
-    .timer-display.urgent { color: #f87171; }
+    .timer-display.urgent { color: var(--red); }
 
-    .quiz-body { padding: 1rem; }
-    .question-type-hint {
-      font-size: 0.78rem; color: #8b949e; margin-bottom: 0.5rem;
-      font-style: italic;
+    .question-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 26px;
+      margin-bottom: 18px;
     }
-    .question-text {
-      font-size: 1.05rem; line-height: 1.65; font-weight: 500;
-      margin-bottom: 1.5rem; color: #e6edf3;
+    .q-difficulty {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
     }
-
-    .choices-list { display: flex; flex-direction: column; gap: 0.6rem; }
-    .choice-card {
-      background: #161b22; border: 1.5px solid #30363d; border-radius: 10px;
-      padding: 0.85rem 1rem; cursor: pointer; transition: all 0.12s;
-      display: flex; align-items: flex-start; gap: 0.75rem; user-select: none;
+    .q-text {
+      font-size: 1.05rem;
+      line-height: 1.65;
     }
-    .choice-card:hover { border-color: #58a6ff; background: #1a2233; }
-    .choice-card.selected { border-color: #58a6ff; background: #1a2233; }
-    .choice-card.correct { border-color: #3fb950; background: #1a2e1e; }
-    .choice-card.incorrect { border-color: #f87171; background: #2e1a1a; }
-    .choice-card.show-correct { border-color: #3fb950; background: #1a2e1e; }
-
-    .choice-indicator {
-      width: 22px; height: 22px; border-radius: 50%; border: 2px solid #30363d;
-      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: 700; margin-top: 1px;
-    }
-    .choice-card.selected .choice-indicator {
-      border-color: #58a6ff; background: #58a6ff; color: #0d1117;
-    }
-    .choice-card.correct .choice-indicator {
-      border-color: #3fb950; background: #3fb950; color: #0d1117;
-    }
-    .choice-card.incorrect .choice-indicator {
-      border-color: #f87171; background: #f87171; color: #0d1117;
-    }
-    .choice-card.show-correct .choice-indicator {
-      border-color: #3fb950; background: #3fb950; color: #0d1117;
-    }
-    .choice-label { font-size: 0.93rem; line-height: 1.5; color: #e6edf3; }
-
-    .quiz-actions {
-      display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;
-    }
-    .btn-submit {
-      flex: 1; padding: 0.8rem 1.2rem; border-radius: 10px; border: none;
-      background: #1f6feb; color: #fff; font-size: 0.95rem; font-weight: 600;
-      cursor: pointer; transition: opacity 0.15s;
-    }
-    .btn-submit:hover { opacity: 0.85; }
-    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .btn-nav {
-      padding: 0.8rem 1.2rem; border-radius: 10px;
-      border: 1px solid #30363d; background: #161b22; color: #e6edf3;
-      font-size: 0.95rem; cursor: pointer; transition: all 0.12s; font-weight: 500;
-    }
-    .btn-nav:hover { border-color: #58a6ff; color: #58a6ff; }
-    .btn-nav:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    .feedback-box {
-      margin-top: 1.2rem; padding: 1rem 1.1rem; border-radius: 10px;
-      border: 1px solid; font-size: 0.9rem; line-height: 1.55;
-    }
-    .feedback-box.correct-fb {
-      background: #1a2e1e; border-color: #3fb950; color: #7ee89c;
-    }
-    .feedback-box.incorrect-fb {
-      background: #2e1a1a; border-color: #f87171; color: #fca5a5;
-    }
-    .feedback-box .fb-result {
-      font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem;
-    }
-    .feedback-box .fb-explanation { color: #e6edf3; }
-
-    /* ── RESULTS SCREEN ── */
-    #results-screen {
-      max-width: 800px; margin: 0 auto; padding: 2.5rem 1rem 3rem;
-    }
-    .results-header { text-align: center; margin-bottom: 2.5rem; }
-    .score-display {
-      font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 700; margin-bottom: 0.4rem;
-    }
-    .pass-badge, .fail-badge {
-      display: inline-block; padding: 0.35rem 1.1rem; border-radius: 20px;
-      font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
-    }
-    .pass-badge { background: #1a2e1e; color: #3fb950; border: 1.5px solid #3fb950; }
-    .fail-badge { background: #2e1a1a; color: #f87171; border: 1.5px solid #f87171; }
-    .passing-note { font-size: 0.85rem; color: #8b949e; }
-
-    .results-section {
-      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
-      padding: 1.3rem; margin-bottom: 1.2rem;
-    }
-    .results-section h3 {
-      font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em;
-      color: #8b949e; margin-bottom: 1rem;
+    .multi-hint {
+      font-size: 0.82rem;
+      color: var(--yellow);
+      margin-top: 8px;
     }
 
-    .topic-breakdown-row { margin-bottom: 1rem; }
-    .topic-breakdown-row:last-child { margin-bottom: 0; }
-    .tbr-header { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
-    .tbr-name { font-size: 0.88rem; }
-    .tbr-score { font-size: 0.88rem; font-weight: 600; }
-    .tbr-bar-wrap { background: #0d1117; border-radius: 4px; height: 8px; }
-    .tbr-bar { height: 8px; border-radius: 4px; transition: width 0.6s ease; }
-    .tbr-bar.strong { background: #3fb950; }
-    .tbr-bar.ok { background: #58a6ff; }
-    .tbr-bar.weak { background: #f87171; }
-
-    .weak-area-tag {
-      display: inline-block; background: #2e1a1a; border: 1px solid #f87171;
-      color: #f87171; border-radius: 8px; padding: 0.35rem 0.8rem;
-      font-size: 0.82rem; margin: 0.25rem;
+    .choices-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
     }
-
-    .results-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }
-    .btn-results {
-      flex: 1; min-width: 160px; padding: 0.85rem 1rem; border-radius: 10px;
-      border: 1px solid #30363d; background: #161b22; color: #e6edf3;
-      font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    .choice-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 13px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: border-color 0.15s, background 0.15s;
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
-    .btn-results:hover { border-color: #58a6ff; color: #58a6ff; }
-    .btn-results.primary {
-      background: #1f6feb; border-color: #1f6feb; color: #fff;
-    }
-    .btn-results.primary:hover { opacity: 0.85; }
+    .choice-item:hover:not(.disabled) { border-color: var(--blue); background: #1c2230; }
+    .choice-item.selected { border-color: var(--blue); background: rgba(88,166,255,0.1); }
+    .choice-item.correct { border-color: var(--green); background: rgba(63,185,80,0.1); }
+    .choice-item.wrong { border-color: var(--red); background: rgba(248,113,113,0.1); }
+    .choice-item.show-correct { border-color: var(--green); background: rgba(63,185,80,0.08); }
+    .choice-item.disabled { cursor: default; }
 
-    /* ── REVIEW MODE ── */
+    .choice-letter {
+      width: 24px; height: 24px; min-width: 24px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 600; color: var(--muted);
+    }
+    .choice-item.selected .choice-letter { border-color: var(--blue); color: var(--blue); }
+    .choice-item.correct .choice-letter { border-color: var(--green); color: var(--green); background: rgba(63,185,80,0.15); }
+    .choice-item.wrong .choice-letter { border-color: var(--red); color: var(--red); background: rgba(248,113,113,0.15); }
+    .choice-item.show-correct .choice-letter { border-color: var(--green); color: var(--green); background: rgba(63,185,80,0.15); }
+
+    .explanation-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--blue);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--muted);
+      display: none;
+    }
+    .explanation-box.visible { display: block; }
+    .explanation-box strong { color: var(--text); }
+
+    .quiz-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
     .review-banner {
-      background: #1f3a5c; border: 1px solid #58a6ff; border-radius: 10px;
-      padding: 0.75rem 1rem; margin: 0.75rem 1rem; font-size: 0.85rem;
-      color: #58a6ff; display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(240,160,64,0.1);
+      border: 1px solid var(--yellow);
+      color: var(--yellow);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+      text-align: center;
     }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 480px) {
-      .tw-name { min-width: 140px; font-size: 0.78rem; }
-      .quiz-header { flex-direction: column; align-items: flex-start; }
-      .mode-toggle { flex-direction: column; }
-      .results-actions { flex-direction: column; }
+    /* RESULTS */
+    .results-header { text-align: center; padding: 28px 0 20px; }
+    .pass-badge {
+      display: inline-block;
+      padding: 5px 18px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+    .pass-badge.pass { background: rgba(63,185,80,0.18); color: var(--green); border: 1px solid var(--green); }
+    .pass-badge.fail { background: rgba(248,113,113,0.18); color: var(--red); border: 1px solid var(--red); }
+    .score-circle { font-size: 3.2rem; font-weight: 700; line-height: 1; margin-bottom: 8px; }
+    .score-circle.pass { color: var(--green); }
+    .score-circle.fail { color: var(--red); }
+    .score-subtitle { color: var(--muted); font-size: 0.95rem; }
+
+    .results-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin: 22px 0;
+    }
+    .stat-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-box .v { font-size: 1.5rem; font-weight: 700; color: var(--blue); }
+    .stat-box .l { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    .topic-results {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .topic-result-row { margin-bottom: 14px; }
+    .topic-result-row:last-child { margin-bottom: 0; }
+    .topic-result-header { display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 6px; }
+    .topic-result-header .pct.weak { color: var(--red); font-weight: 600; }
+    .topic-result-header .pct.ok { color: var(--green); font-weight: 600; }
+    .bar-track { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+    .bar-fill.weak { background: var(--red); }
+    .bar-fill.ok { background: var(--green); }
+    .weak-label { font-size: 0.75rem; color: var(--red); margin-top: 4px; }
+
+    .results-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+    @media (max-width: 500px) {
+      .container { padding: 22px 14px 50px; }
+      .question-card { padding: 18px; }
+      .home-header h1 { font-size: 1.5rem; }
+      .score-circle { font-size: 2.5rem; }
+      .exam-info-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     HOME SCREEN
-═══════════════════════════════════════════════════════════ -->
-<div id="home-screen" class="screen active">
-  <div class="home-header">
-    <h1>Salesforce App Builder Exam Prep</h1>
-    <p>Master every topic and pass the Salesforce Certified Platform App Builder exam.</p>
-    <div class="exam-facts">
-      <span class="fact-pill"><span>60</span> Questions</span>
-      <span class="fact-pill"><span>105</span> Minutes</span>
-      <span class="fact-pill"><span>63%</span> to Pass</span>
-      <span class="fact-pill"><span>82</span> in Bank</span>
-    </div>
-  </div>
+<div id="progress-bar-container"><div id="progress-bar"></div></div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="label">Questions Available</div>
-      <div class="value" id="stat-total">82</div>
-      <div class="sub">across 5 topics</div>
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="container">
+    <div class="home-header">
+      <h1>Salesforce App Builder</h1>
+      <p>Platform App Builder Exam Prep &mdash; 82 practice questions</p>
     </div>
-    <div class="stat-card">
-      <div class="label">Best Score</div>
-      <div class="value" id="stat-best">—</div>
-      <div class="sub" id="stat-best-date">No sessions yet</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Sessions Completed</div>
-      <div class="value" id="stat-sessions">0</div>
-      <div class="sub">total practice runs</div>
-    </div>
-  </div>
 
-  <div class="section-label">Select Mode</div>
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="btn-study-mode" onclick="setMode('study')">📖 Study Mode</button>
-    <button class="mode-btn" id="btn-exam-mode" onclick="setMode('exam')">🎯 Exam Mode</button>
-  </div>
-  <div class="mode-desc" id="mode-desc">
-    <strong>Study Mode:</strong> Immediate feedback after each answer with full explanations. Navigate freely. Great for learning.
-  </div>
+    <div class="exam-info-grid">
+      <div class="info-card"><div class="value">60</div><div class="label">Exam Questions</div></div>
+      <div class="info-card"><div class="value">105</div><div class="label">Minutes</div></div>
+      <div class="info-card"><div class="value">63%</div><div class="label">Passing Score</div></div>
+      <div class="info-card"><div class="value">82</div><div class="label">Practice Qs</div></div>
+    </div>
 
-  <div class="section-label">Topic Filter</div>
-  <div class="topic-filter-wrap">
-    <select id="topic-select">
-      <option value="all">All Topics (82 questions)</option>
-      <option value="fundamentals">Salesforce Fundamentals (19)</option>
-      <option value="ui">User Interface (14)</option>
-      <option value="data-model">Data Modeling &amp; Management (18)</option>
-      <option value="automation">Business Logic &amp; Process Automation (23)</option>
-      <option value="deployment">App Deployment (8)</option>
-    </select>
-  </div>
+    <div class="topic-breakdown">
+      <div class="section-label">Exam Topic Weights</div>
+      <div class="topic-row"><span>Business Logic &amp; Process Automation</span><span class="pct">28%</span></div>
+      <div class="topic-row"><span>Salesforce Fundamentals</span><span class="pct">23%</span></div>
+      <div class="topic-row"><span>Data Modeling &amp; Management</span><span class="pct">22%</span></div>
+      <div class="topic-row"><span>User Interface</span><span class="pct">17%</span></div>
+      <div class="topic-row"><span>App Deployment</span><span class="pct">10%</span></div>
+    </div>
 
-  <button class="start-btn" onclick="startSession()">Start Session →</button>
+    <div id="best-score-banner" class="best-score-banner" style="display:none;">
+      <span class="label">Best Score</span>
+      <span class="score" id="best-score-val"></span>
+    </div>
 
-  <div class="topic-weights">
-    <div class="section-label" style="margin-bottom:0.9rem;">Exam Topic Weights</div>
-    <div class="topic-weight-row">
-      <div class="tw-name">Business Logic &amp; Automation</div>
-      <div class="tw-bar-wrap"><div class="tw-bar" style="width:28%"></div></div>
-      <div class="tw-pct">28%</div>
-    </div>
-    <div class="topic-weight-row">
-      <div class="tw-name">Salesforce Fundamentals</div>
-      <div class="tw-bar-wrap"><div class="tw-bar" style="width:23%"></div></div>
-      <div class="tw-pct">23%</div>
-    </div>
-    <div class="topic-weight-row">
-      <div class="tw-name">Data Modeling &amp; Management</div>
-      <div class="tw-bar-wrap"><div class="tw-bar" style="width:22%"></div></div>
-      <div class="tw-pct">22%</div>
-    </div>
-    <div class="topic-weight-row">
-      <div class="tw-name">User Interface</div>
-      <div class="tw-bar-wrap"><div class="tw-bar" style="width:17%"></div></div>
-      <div class="tw-pct">17%</div>
-    </div>
-    <div class="topic-weight-row">
-      <div class="tw-name">App Deployment</div>
-      <div class="tw-bar-wrap"><div class="tw-bar" style="width:10%"></div></div>
-      <div class="tw-pct">10%</div>
+    <div class="controls-card">
+      <div class="section-label" style="margin-bottom:14px;">Session Setup</div>
+
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-study" onclick="setMode('study')">Study Mode</button>
+        <button class="mode-btn" id="btn-exam" onclick="setMode('exam')">Exam Mode</button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="topic-filter">Topic Filter</label>
+          <select id="topic-filter">
+            <option value="all">All Topics</option>
+            <option value="fundamentals">Salesforce Fundamentals</option>
+            <option value="ui">User Interface</option>
+            <option value="data-model">Data Modeling &amp; Management</option>
+            <option value="automation">Business Logic &amp; Automation</option>
+            <option value="deployment">App Deployment</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="q-count">Number of Questions</label>
+          <input type="number" id="q-count" value="20" min="5" max="82">
+        </div>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="shuffle-check" checked>
+        Shuffle questions
+      </label>
+
+      <button class="btn btn-primary btn-full" style="font-size:1rem;padding:14px;" onclick="startSession(false)">Start Session</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     QUIZ SCREEN
-═══════════════════════════════════════════════════════════ -->
-<div id="quiz-screen" class="screen">
-  <div class="quiz-progress-bar-wrap">
-    <div class="quiz-progress-bar-bg">
-      <div class="quiz-progress-bar-fill" id="progress-bar" style="width:0%"></div>
+<!-- QUIZ -->
+<div id="screen-quiz" class="screen">
+  <div class="container">
+    <div id="review-banner" class="review-banner" style="display:none;">
+      Reviewing wrong answers &mdash; <span id="review-counter"></span>
     </div>
-  </div>
 
-  <div class="quiz-header">
-    <span class="q-counter" id="q-counter">Question 1 of 60</span>
-    <span class="topic-badge" id="topic-badge">Fundamentals</span>
-    <span class="timer-display" id="timer-display" style="display:none">1:45:00</span>
-  </div>
+    <div class="quiz-header">
+      <div class="quiz-counter" id="quiz-counter">Question 1 of 20</div>
+      <div class="quiz-topic-badge" id="quiz-topic-badge">Fundamentals</div>
+      <div class="timer-display" id="timer-display" style="display:none;">1:45:00</div>
+    </div>
 
-  <div id="review-banner" class="review-banner" style="display:none">
-    📋 Review Mode — showing incorrect answers with explanations
-  </div>
+    <div class="question-card">
+      <div class="q-difficulty" id="q-difficulty"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="multi-hint" id="multi-hint" style="display:none;">Select all that apply</div>
+    </div>
 
-  <div class="quiz-body">
-    <div class="question-type-hint" id="q-type-hint"></div>
-    <div class="question-text" id="question-text">Loading…</div>
-    <div class="choices-list" id="choices-list"></div>
+    <ul class="choices-list" id="choices-list"></ul>
+
+    <div class="explanation-box" id="explanation-box">
+      <strong>Explanation:</strong> <span id="explanation-text"></span>
+    </div>
+
     <div class="quiz-actions">
-      <button class="btn-nav" id="btn-prev" onclick="goQuestion(-1)">← Prev</button>
-      <button class="btn-submit" id="btn-submit" onclick="submitAnswer()">Submit Answer</button>
-      <button class="btn-nav" id="btn-next" onclick="goQuestion(1)" style="display:none">Next →</button>
+      <button class="btn btn-primary" id="btn-submit" onclick="submitAnswer()">Submit</button>
+      <button class="btn btn-secondary" id="btn-next" onclick="nextQuestion()" style="display:none;">Next Question</button>
+      <button class="btn btn-secondary" onclick="endSession()">End Session</button>
     </div>
-    <div id="feedback-box" style="display:none"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     RESULTS SCREEN
-═══════════════════════════════════════════════════════════ -->
-<div id="results-screen" class="screen">
-  <div class="results-header">
-    <div class="score-display" id="res-score">—</div>
-    <div id="res-badge"></div>
-    <div class="passing-note">Passing score: 63% (38/60 on the real exam)</div>
-  </div>
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="container">
+    <div class="results-header">
+      <div class="pass-badge" id="pass-badge">PASS</div>
+      <div class="score-circle" id="score-circle">75%</div>
+      <div class="score-subtitle" id="score-subtitle">45 / 60 correct</div>
+    </div>
 
-  <div class="results-section">
-    <h3>Topic Breakdown</h3>
-    <div id="topic-breakdown"></div>
-  </div>
+    <div class="results-stats">
+      <div class="stat-box"><div class="v" id="res-correct">0</div><div class="l">Correct</div></div>
+      <div class="stat-box"><div class="v" id="res-wrong">0</div><div class="l">Wrong</div></div>
+      <div class="stat-box"><div class="v" id="res-total">0</div><div class="l">Total</div></div>
+      <div class="stat-box"><div class="v" id="res-time">--</div><div class="l">Time Used</div></div>
+    </div>
 
-  <div class="results-section" id="weak-areas-section" style="display:none">
-    <h3>Weak Areas (&lt; 70%)</h3>
-    <div id="weak-areas-list"></div>
-  </div>
+    <div class="topic-results">
+      <div class="section-label" style="margin-bottom:14px;">Performance by Topic</div>
+      <div id="topic-breakdown-results"></div>
+    </div>
 
-  <div class="results-actions">
-    <button class="btn-results" onclick="reviewWrong()">Review Wrong Answers</button>
-    <button class="btn-results" onclick="practiceWeak()">Practice Weak Topics</button>
-    <button class="btn-results primary" onclick="showHome()">Start Over</button>
+    <div class="results-actions">
+      <button class="btn btn-secondary" onclick="showHome()">Home</button>
+      <button class="btn btn-secondary" id="btn-review-wrong" onclick="startReview()">Review Wrong Answers</button>
+      <button class="btn btn-green" onclick="startSession(true)">Retake</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-//  QUESTION BANK  (82 questions)
-// ═══════════════════════════════════════════════════════════
-const QUESTIONS = [
-
-// ── FUNDAMENTALS (19) ──────────────────────────────────────
-
-{id:1,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"A company wants to extend Salesforce with a pre-built application that handles project management. Where should an admin look first to find a solution?",
-choices:["AppExchange","Salesforce Trailhead","Setup > Custom Objects","Developer Console"],
-correct:[0],
-explanation:"AppExchange is Salesforce's marketplace for pre-built apps, components, and solutions. Admins should search there before building custom solutions from scratch."},
-
-{id:2,topic:"fundamentals",type:"single",difficulty:"easy",
-question:"Which Salesforce feature allows users to collaborate, share files, and follow records directly within the platform?",
-choices:["Salesforce Inbox","Chatter","Communities","Quip"],
-correct:[1],
-explanation:"Chatter is Salesforce's enterprise social collaboration tool that lets users post, follow records, share files, and collaborate within Salesforce."},
-
-{id:3,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"A user needs to access Salesforce from their smartphone but can only see a limited set of records. Which Salesforce app should they use?",
-choices:["Salesforce Classic","Salesforce Mobile App","Salesforce Inbox","Lightning Console"],
-correct:[1],
-explanation:"The Salesforce Mobile App (formerly Salesforce1) allows users to access Salesforce on iOS and Android devices with a mobile-optimized interface."},
-
-{id:4,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"An organization has users who need full CRM access and users who only need to submit expense reports. Which license type is most cost-effective for expense report submitters?",
-choices:["Salesforce License","Salesforce Platform License","Community License","Work.com License"],
-correct:[1],
-explanation:"Salesforce Platform License provides access to custom apps and a subset of standard functionality (no Sales Cloud or Service Cloud features), making it more affordable for users who only need custom app access."},
-
-{id:5,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"What is the key difference between Profiles and Permission Sets?",
-choices:["Profiles control record-level access; Permission Sets control field-level access","Profiles are assigned to one user; Permission Sets can be assigned to many","Each user can have only one Profile but multiple Permission Sets","Profiles are only available in Enterprise Edition"],
-correct:[2],
-explanation:"Every user is assigned exactly one Profile, which defines their baseline permissions. Permission Sets can be used to grant additional permissions to specific users beyond what their Profile allows, and multiple Permission Sets can be assigned to a single user."},
-
-{id:6,topic:"fundamentals",type:"single",difficulty:"hard",
-question:"Which sharing mechanism grants access based on a user's position in the role hierarchy?",
-choices:["Manual sharing","OWD (Org-Wide Defaults)","Role Hierarchy","Sharing Rules"],
-correct:[2],
-explanation:"The Role Hierarchy grants users access to records owned by users below them in the hierarchy. This is automatic — no additional configuration is needed beyond assigning users to roles."},
-
-{id:7,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"An admin sets the Org-Wide Default for Accounts to 'Private'. What does this mean?",
-choices:["All users can view all Account records","Only the record owner and users above them in the hierarchy can access the record","Account records are read-only for all users","Accounts can only be accessed from the mobile app"],
-correct:[1],
-explanation:"When OWD is set to Private, only the record owner and users above them in the role hierarchy (and system administrators) can view and edit the record. Sharing rules, manual sharing, or role hierarchy can open access further."},
-
-{id:8,topic:"fundamentals",type:"multi",difficulty:"hard",
-question:"Which TWO statements accurately describe Sharing Rules? (Select 2)",
-choices:["Sharing Rules can only grant Read-Only or Read/Write access","Sharing Rules can restrict access below OWD","Sharing Rules can be based on record ownership or field criteria","Sharing Rules replace the need for Role Hierarchy"],
-correct:[0,2],
-explanation:"Sharing Rules extend access (they never restrict it below OWD) to groups of users based on who owns the record or criteria values on the record. They grant either Read-Only or Read/Write access."},
-
-{id:9,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"What is the difference between Roles and Profiles?",
-choices:["Roles define what a user can do; Profiles define what records a user can see","Profiles define what a user can do; Roles define data visibility through hierarchy","Roles are required; Profiles are optional","Roles are assigned by record type; Profiles are assigned by object"],
-correct:[1],
-explanation:"Profiles control what users can do (object/field permissions, app access, etc.). Roles primarily control data visibility — users in higher roles can see records owned by users in lower roles through the role hierarchy."},
-
-{id:10,topic:"fundamentals",type:"single",difficulty:"hard",
-question:"A global company needs to display currency amounts in multiple currencies on records. Which Salesforce feature must be enabled?",
-choices:["Multi-Currency","Currency Fields","Locale Settings","International Pricing"],
-correct:[0],
-explanation:"Multi-Currency must be enabled by Salesforce Support at the org level. Once enabled, admins can add currencies and users can set their personal currency. Advanced Currency Management adds dated exchange rates for opportunity products."},
-
-{id:11,topic:"fundamentals",type:"single",difficulty:"easy",
-question:"Which Salesforce cloud is primarily designed to help companies manage customer support cases and service agents?",
-choices:["Sales Cloud","Service Cloud","Marketing Cloud","Commerce Cloud"],
-correct:[1],
-explanation:"Service Cloud is Salesforce's customer service platform, offering features like Cases, Entitlements, Service Console, Knowledge, and Omni-Channel routing for support teams."},
-
-{id:12,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"A user wants to see all open opportunities assigned to their team in a single view without creating a report. Which feature should they use?",
-choices:["Dashboard","List View","Report","Chatter Feed"],
-correct:[1],
-explanation:"List Views allow users to filter and display records in a tabular format directly on the object's home tab. They can be personal, shared, or set as the default view, and are quicker to create than full reports."},
-
-{id:13,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"Which Salesforce edition is typically the minimum edition that allows access to the API?",
-choices:["Essentials","Professional","Enterprise","Developer"],
-correct:[2],
-explanation:"API access is generally available starting with Enterprise Edition (and also Developer Edition, which is free for development). Professional Edition does not include API access by default (it can be purchased as an add-on)."},
-
-{id:14,topic:"fundamentals",type:"single",difficulty:"easy",
-question:"What is AppExchange primarily used for?",
-choices:["Writing Apex code","Finding and installing pre-built apps and components","Managing user licenses","Configuring org-wide security settings"],
-correct:[1],
-explanation:"AppExchange is Salesforce's marketplace where ISVs and partners publish apps, components, flow templates, and solutions that Salesforce admins and developers can install into their orgs."},
-
-{id:15,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"A sales rep complains they cannot see certain fields on an Account record that their manager can see. The OWD for Accounts is Public Read/Write. What is the most likely cause?",
-choices:["The record is private","A sharing rule is blocking access","Field-Level Security on the Profile is hiding those fields","The role hierarchy is restricting field access"],
-correct:[2],
-explanation:"Field-Level Security (FLS) is controlled at the Profile and Permission Set level. If a field is set to 'Hidden' or 'Read Only' on the user's profile and they lack a Permission Set granting access, they will not see that field regardless of sharing settings."},
-
-{id:16,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"Which of the following is a characteristic of a Salesforce 'managed package' from AppExchange?",
-choices:["The code is visible and editable by the installer","The package can be upgraded by the publisher","The installer fully owns and controls all metadata","Managed packages cannot include Apex code"],
-correct:[1],
-explanation:"Managed packages are published by ISV partners and can be upgraded by the publisher pushing new versions. The code is protected (not visible to installers). They support versioning and intellectual property protection."},
-
-{id:17,topic:"fundamentals",type:"single",difficulty:"hard",
-question:"A company wants to give a group of users access to records they do not own, based on a value in a field on those records. Which feature should the admin use?",
-choices:["Role Hierarchy","Manual Sharing","Criteria-Based Sharing Rules","Permission Sets"],
-correct:[2],
-explanation:"Criteria-Based Sharing Rules share records with a group of users when record field values match specified criteria. This is different from owner-based sharing rules which share all records owned by a particular group."},
-
-{id:18,topic:"fundamentals",type:"single",difficulty:"medium",
-question:"Salesforce's 'Trailhead' platform is best described as:",
-choices:["A deployment tool for moving metadata between orgs","A gamified, free online learning platform for Salesforce skills","A paid certification testing center","An AppExchange marketplace for apps"],
-correct:[1],
-explanation:"Trailhead is Salesforce's free online learning platform with guided paths, hands-on challenges (using free Trailhead Playgrounds), and badges. It covers everything from admin basics to advanced developer topics."},
-
-{id:19,topic:"fundamentals",type:"single",difficulty:"hard",
-question:"An admin needs to allow a specific user to access records they would not normally have access to, without creating a sharing rule for everyone. Which tool is most appropriate?",
-choices:["Public Group Sharing Rule","Manual Sharing","OWD change to Public Read/Write","Role Hierarchy adjustment"],
-correct:[1],
-explanation:"Manual Sharing allows record owners (and admins) to share individual records with specific users or groups on a one-off basis. It's ideal when sharing rules would be too broad."},
-
-// ── USER INTERFACE (14) ────────────────────────────────────
-
-{id:20,topic:"ui",type:"single",difficulty:"medium",
-question:"An admin wants to customize the layout of a Lightning record page by adding, removing, and repositioning components. Which tool should they use?",
-choices:["Page Layout Editor","Lightning App Builder","Schema Builder","Flow Builder"],
-correct:[1],
-explanation:"Lightning App Builder is the drag-and-drop tool used to create and customize Lightning record pages, home pages, and app pages. Page Layout Editor controls which fields appear within the Details component."},
-
-{id:21,topic:"ui",type:"single",difficulty:"medium",
-question:"What is the purpose of a 'Page Layout' in Salesforce?",
-choices:["It controls which apps appear in the App Launcher","It defines which fields, related lists, and buttons appear on a record's detail and edit page","It determines the color scheme of the Salesforce org","It controls which records a user can see"],
-correct:[1],
-explanation:"Page Layouts control the arrangement of fields, buttons, quick actions, and related lists that appear on record detail and edit pages. Different page layouts can be assigned to different profiles and record types."},
-
-{id:22,topic:"ui",type:"single",difficulty:"hard",
-question:"A company wants to show or hide fields on a record page based on the value of another field, without writing code. Which Lightning App Builder feature enables this?",
-choices:["Record Types","Dynamic Forms","Compact Layouts","Flow Screens"],
-correct:[1],
-explanation:"Dynamic Forms allow admins to move individual fields and sections from the page layout to the Lightning record page, then apply visibility rules (filters) to show/hide fields based on other field values, user profile, or device."},
-
-{id:23,topic:"ui",type:"single",difficulty:"medium",
-question:"Which type of action allows a user to create a new record from any page within Salesforce, without navigating to the specific object?",
-choices:["Object-Specific Quick Action","Global Quick Action","Custom Button","Inline Edit"],
-correct:[1],
-explanation:"Global Quick Actions appear in the global action menu (the '+' icon in the header) and can be used from any page in Salesforce. They can create records, log calls, send emails, or launch flows — not tied to a specific object context."},
-
-{id:24,topic:"ui",type:"single",difficulty:"medium",
-question:"What is a Compact Layout used for in Salesforce?",
-choices:["Defining the fields shown in list views","Displaying key fields in the record highlights panel and in mobile previews","Controlling which tabs appear in a Lightning App","Setting the default view for dashboards"],
-correct:[1],
-explanation:"Compact Layouts control which fields appear in the record highlights panel (the top of a record page in Lightning), in Salesforce Mobile App preview cards, and in hover details. They typically show 4-7 key fields."},
-
-{id:25,topic:"ui",type:"single",difficulty:"medium",
-question:"An admin creates a Lightning App. What can be configured in a Lightning App?",
-choices:["Custom Apex classes","The navigation bar tabs and items visible to assigned profiles","Org-Wide Defaults","Custom Object relationships"],
-correct:[1],
-explanation:"Lightning Apps define the navigation bar tabs, the app logo/branding, and which profiles have access to the app. Admins assign standard/custom objects, Visualforce pages, and other items to the navigation bar."},
-
-{id:26,topic:"ui",type:"single",difficulty:"easy",
-question:"Which of the following is NOT a standard component available in Lightning App Builder?",
-choices:["Recent Items","Rich Text","Apex Controller","Report Chart"],
-correct:[2],
-explanation:"Apex Controller is not a drag-and-drop component in Lightning App Builder. Standard components include Rich Text, Report Chart, Recent Items, List View, and many others. Custom components can be built by developers."},
-
-{id:27,topic:"ui",type:"multi",difficulty:"hard",
-question:"Which TWO types of pages can be created using Lightning App Builder? (Select 2)",
-choices:["App Pages","Record Pages","Visualforce Pages","Email Templates"],
-correct:[0,1],
-explanation:"Lightning App Builder can create App Pages (standalone pages added to the navigation bar) and Record Pages (customized record detail pages for specific objects). Visualforce Pages and Email Templates are created with separate tools."},
-
-{id:28,topic:"ui",type:"single",difficulty:"medium",
-question:"A user wants to create a personal list view on the Opportunity object filtered to show only their open deals closing this quarter. Who can see this list view?",
-choices:["All users in the org","Only users with the same profile","Only the user who created it","All users assigned to the same role"],
-correct:[2],
-explanation:"When creating a list view, users can set visibility to 'Only I can see this list view' (personal), 'All users can see this list view', or share with specific groups. A personal list view is only visible to its creator."},
-
-{id:29,topic:"ui",type:"single",difficulty:"hard",
-question:"What is the primary difference between an Object-Specific Quick Action and a Global Quick Action?",
-choices:["Object-Specific Quick Actions are only available on mobile","Global Quick Actions can only log calls","Object-Specific Quick Actions are tied to a specific parent object and pre-populate related fields; Global Quick Actions are not tied to any object","Global Quick Actions require Apex code"],
-correct:[2],
-explanation:"Object-Specific Quick Actions appear on the related object's record page and can pre-populate fields with values from the parent record. Global Quick Actions appear everywhere but have no parent record context."},
-
-{id:30,topic:"ui",type:"single",difficulty:"medium",
-question:"An admin activates a new Lightning record page for the Account object and sets the activation to 'Org Default'. What is the effect?",
-choices:["Only System Administrators see the new page","The page replaces the default for all users, profiles, and apps not otherwise specified","Users can choose between old and new page layouts","The new page only shows in the Salesforce Mobile App"],
-correct:[1],
-explanation:"Setting a Lightning record page activation to 'Org Default' makes it the default for all users viewing that object unless a more specific assignment (by App, Profile, or App + Profile) overrides it."},
-
-{id:31,topic:"ui",type:"single",difficulty:"hard",
-question:"A developer has built a custom Lightning Web Component (LWC). Where does the admin add it to a record page?",
-choices:["Page Layout Editor","Component Library","Lightning App Builder","Salesforce CLI"],
-correct:[2],
-explanation:"Custom LWCs that are configured for use in Lightning App Builder appear in the component panel and can be dragged onto record pages, app pages, or home pages — no code required from the admin."},
-
-{id:32,topic:"ui",type:"single",difficulty:"medium",
-question:"Which feature allows related records from a child object to appear in a configurable, columnar table on a parent record page without code?",
-choices:["Related List - Single","Dynamic Related List - Single","Lookup Field","Compact Layout"],
-correct:[1],
-explanation:"The 'Dynamic Related List - Single' Lightning component allows admins to configure which columns, filters, and sort order are shown for a related list directly in Lightning App Builder — more flexible than the standard related list."},
-
-{id:33,topic:"ui",type:"single",difficulty:"easy",
-question:"Where can an admin add a custom tab to a Lightning App's navigation bar?",
-choices:["Profile Settings > Tabs","App Manager > Edit App > Navigation Items","Page Layout Editor","Lightning App Builder"],
-correct:[1],
-explanation:"In the Lightning Experience App Manager (Setup > App Manager), admins edit a Lightning App and add or reorder navigation items (tabs for objects, Visualforce pages, web tabs, etc.) in the Navigation Items step."},
-
-// ── DATA MODELING (18) ─────────────────────────────────────
-
-{id:34,topic:"data-model",type:"single",difficulty:"medium",
-question:"A company wants to create a many-to-many relationship between Projects and Employees. What is the recommended Salesforce approach?",
-choices:["Create two Lookup fields on a new object","Create a Junction Object with two Master-Detail relationships","Use a Multi-Select Picklist field","Create a Roll-Up Summary field"],
-correct:[1],
-explanation:"A Junction Object (also called an associative object) sits between two objects and has a Master-Detail relationship to each. This models many-to-many relationships and enables roll-up summaries on both parent objects."},
-
-{id:35,topic:"data-model",type:"single",difficulty:"medium",
-question:"What happens to child records when a Master-Detail relationship's parent record is deleted?",
-choices:["Child records are orphaned (parent field becomes blank)","Child records are also deleted (cascade delete)","An error prevents the parent from being deleted","Child records are transferred to another parent"],
-correct:[1],
-explanation:"Master-Detail relationships enforce cascade delete — when a parent record is deleted, all related child records are automatically deleted as well. This is a key difference from Lookup relationships, which leave children intact."},
-
-{id:36,topic:"data-model",type:"single",difficulty:"hard",
-question:"Which field type can only be created on a child object in a Master-Detail relationship, not in a Lookup relationship?",
-choices:["Formula Field","Currency Field","Roll-Up Summary Field","Text Field"],
-correct:[2],
-explanation:"Roll-Up Summary fields can only be created on the Master (parent) side of a Master-Detail relationship. They aggregate (COUNT, SUM, MIN, MAX) values from child records. Lookup relationships do not support roll-up summaries natively."},
-
-{id:37,topic:"data-model",type:"single",difficulty:"medium",
-question:"An admin is using Schema Builder and wants to add a new custom field. What is Schema Builder primarily used for?",
-choices:["Importing data into Salesforce","Visually creating and editing objects, fields, and relationships","Deploying metadata between orgs","Creating validation rules"],
-correct:[1],
-explanation:"Schema Builder provides a drag-and-drop visual canvas to view and modify the data model — creating objects, fields, and relationships. It shows how objects relate to each other and is especially useful for understanding complex data models."},
-
-{id:38,topic:"data-model",type:"single",difficulty:"hard",
-question:"What is the maximum character limit for a Formula field in Salesforce?",
-choices:["1,300 characters","3,900 characters","5,000 characters","32,768 characters"],
-correct:[1],
-explanation:"Formula fields have a compiled size limit of 3,900 characters (the formula text itself, not the resulting value). If a formula exceeds this, it must be split or simplified. Text area fields hold up to 32,768 characters."},
-
-{id:39,topic:"data-model",type:"single",difficulty:"medium",
-question:"An admin wants to connect Salesforce records to data stored in an external database without importing it. Which Salesforce feature enables this?",
-choices:["Custom Objects","External Objects","Connected App","Platform Events"],
-correct:[1],
-explanation:"External Objects use Salesforce Connect and OData adapters to access data stored in external systems in real time, without copying it into Salesforce. They look like custom objects but data stays in the external system."},
-
-{id:40,topic:"data-model",type:"single",difficulty:"medium",
-question:"What is the key difference between a Lookup relationship and a Master-Detail relationship regarding the child record?",
-choices:["Lookup child records can exist without a parent; Master-Detail child records require a parent","Master-Detail children can exist without a parent; Lookup children require a parent","Both types require a parent record","Neither type requires a parent record"],
-correct:[0],
-explanation:"In a Lookup relationship, the lookup field is optional by default — child records can exist without a parent (parent can be null). In Master-Detail, the relationship field is required and cannot be blank."},
-
-{id:41,topic:"data-model",type:"single",difficulty:"hard",
-question:"Which statement about Record Types is TRUE?",
-choices:["Record Types can control field-level security","Record Types allow different picklist values and page layouts for different user segments","Record Types can replace the need for separate custom objects","Record Types are available in all Salesforce editions including Essentials"],
-correct:[1],
-explanation:"Record Types allow admins to assign different Page Layouts and different available Picklist values to different user groups (based on Profile). They are commonly used when different business processes apply to different types of records."},
-
-{id:42,topic:"data-model",type:"single",difficulty:"medium",
-question:"A validation rule on a Lead uses the ISCHANGED() function. What happens when the Lead is converted?",
-choices:["Validation rules always run on Lead conversion","Validation rules on Leads do not run during conversion","ISCHANGED() automatically returns FALSE during conversion","Lead conversion creates a new Contact, bypassing all rules"],
-correct:[1],
-explanation:"Validation rules on the Lead object do NOT run during Lead conversion. Admins must create separate validation rules on the resulting Contact, Account, and Opportunity records if needed."},
-
-{id:43,topic:"data-model",type:"single",difficulty:"medium",
-question:"Which field type automatically calculates its value based on a formula and cannot be directly edited by users?",
-choices:["Text","Number","Formula","Currency"],
-correct:[2],
-explanation:"Formula fields calculate and display their value automatically using a formula expression. They are read-only — users cannot directly edit the value. The value updates when related fields change (or when the record is opened/saved in some cases)."},
-
-{id:44,topic:"data-model",type:"single",difficulty:"hard",
-question:"An admin creates a Roll-Up Summary field on an Account to sum all related Opportunity Amounts. Which statement about this scenario is TRUE?",
-choices:["The Roll-Up Summary will work because Account-Opportunity is a Master-Detail relationship","The Roll-Up Summary will work because Salesforce treats Account-Opportunity as Master-Detail for roll-up purposes","Roll-Up summaries cannot be created on standard objects","Roll-Up summaries require Apex triggers on standard relationships"],
-correct:[1],
-explanation:"Although Account-Opportunity is a Lookup relationship, Salesforce provides built-in roll-up capabilities for certain standard object relationships. However, for custom objects and relationships, a true Master-Detail relationship is required for Roll-Up Summary fields."},
-
-{id:45,topic:"data-model",type:"multi",difficulty:"hard",
-question:"Which TWO limitations apply to Roll-Up Summary fields? (Select 2)",
-choices:["Roll-Up Summary fields cannot reference formula fields that use DATEVALUE()","They are only available on the master side of a Master-Detail relationship","Roll-Up Summary fields can be used in Workflow Rule criteria","A single object can have a maximum of 25 Roll-Up Summary fields"],
-correct:[1,3],
-explanation:"Roll-Up Summary fields must be on the master (parent) side of a Master-Detail relationship, and each object can have up to 25 Roll-Up Summary fields. They cannot always reference certain formula fields in their filter criteria."},
-
-{id:46,topic:"data-model",type:"single",difficulty:"medium",
-question:"A validation rule includes the formula NOT(ISPICKVAL(Status__c, 'Closed')) && ISBLANK(Resolution__c). When does this rule fire?",
-choices:["When Status is Closed and Resolution is blank","When Status is NOT Closed and Resolution is blank","When Status is Closed and Resolution is not blank","Only on record creation"],
-correct:[1],
-explanation:"The formula evaluates to TRUE (triggering the error) when Status is NOT 'Closed' AND Resolution is blank. When Status IS 'Closed', NOT(ISPICKVAL(...,'Closed')) is FALSE, so the AND fails and the rule does not fire."},
-
-{id:47,topic:"data-model",type:"single",difficulty:"hard",
-question:"Does a validation rule prevent record saving when the formula evaluates to TRUE or FALSE?",
-choices:["FALSE — the rule fires when the formula is false","TRUE — the rule fires (blocks save) when the formula evaluates to true","The rule fires based on the error message text, not a formula result","Validation rules only fire during bulk data import"],
-correct:[1],
-explanation:"A validation rule blocks the record save and displays the error message when the rule's formula evaluates to TRUE. If the formula is FALSE, the record saves normally. This is counterintuitive — you write the formula to describe the INVALID condition."},
-
-{id:48,topic:"data-model",type:"single",difficulty:"medium",
-question:"What is the maximum number of levels of Master-Detail relationships that Salesforce supports (grandparent-parent-child)?",
-choices:["1 level","2 levels","3 levels","5 levels"],
-correct:[1],
-explanation:"Salesforce supports up to 2 levels of Master-Detail relationships, meaning you can have a grandparent → parent → child hierarchy. You cannot nest more than 2 levels of Master-Detail relationships."},
-
-{id:49,topic:"data-model",type:"single",difficulty:"medium",
-question:"A Quick Create form on the Leads home page is used by a sales rep. Which statement is TRUE about validation rules in this context?",
-choices:["All validation rules run on Quick Create","Validation rules that reference fields not on the Quick Create form may be bypassed","Quick Create always bypasses all validation rules","Quick Create forms cannot be used with custom objects"],
-correct:[1],
-explanation:"Quick Create forms only show a subset of fields. If a validation rule references fields not shown on the Quick Create form (and those fields have no value), the rule may fail unexpectedly or be bypassed. Admins should ensure required fields are on the layout."},
-
-{id:50,topic:"data-model",type:"single",difficulty:"medium",
-question:"Which field type should be used when you need to store a monetary value that automatically respects the user's currency in a multi-currency org?",
-choices:["Number","Text","Currency","Percent"],
-correct:[2],
-explanation:"Currency fields store monetary values and, in multi-currency orgs, automatically display the amount in the user's preferred currency using the org's exchange rates. Number fields do not apply currency formatting or conversion."},
-
-{id:51,topic:"data-model",type:"single",difficulty:"hard",
-question:"An admin wants to display a field from a grandparent object on a child record using a formula. The structure is: Invoice (grandparent) → Order (parent) → Order Line Item (child). What type of formula can accomplish this?",
-choices:["Roll-Up Summary Field on Order Line Item","Cross-Object Formula on Order Line Item","Workflow Field Update","Validation Rule"],
-correct:[1],
-explanation:"Cross-Object Formula fields can reference fields from parent objects up to 5 levels up in the hierarchy (for Lookup and Master-Detail relationships). A formula on Order Line Item can reference Order.Invoice__r.Field__c."},
-
-// ── AUTOMATION (23) ────────────────────────────────────────
-
-{id:52,topic:"automation",type:"single",difficulty:"medium",
-question:"A business wants to send an email and update a field automatically every time a Case is set to 'Closed'. No code should be required. Which tool is most appropriate?",
-choices:["Apex Trigger","Record-Triggered Flow","Workflow Rule","Process Builder"],
-correct:[1],
-explanation:"Record-Triggered Flows (also known as Record-Change Flows) are the modern recommended tool for automating actions when records are created or updated. They replace Workflow Rules and Process Builder and do not require code."},
-
-{id:53,topic:"automation",type:"single",difficulty:"medium",
-question:"What is the primary difference between a 'Before Save' and 'After Save' Record-Triggered Flow?",
-choices:["Before Save flows can send emails; After Save flows cannot","Before Save flows can query and create related records; After Save flows cannot","Before Save flows update the triggering record's fields without a DML; After Save flows can create/update other records","After Save flows run first in the order of execution"],
-correct:[2],
-explanation:"Before Save flows can update fields on the triggering record without an additional DML operation (more efficient). After Save flows run after the record is committed to the database and can perform DML on other records, call subflows, and use all actions."},
-
-{id:54,topic:"automation",type:"single",difficulty:"medium",
-question:"Which Flow type presents a user interface with screens for users to interact with during execution?",
-choices:["Record-Triggered Flow","Scheduled Flow","Screen Flow","Auto-launched Flow"],
-correct:[2],
-explanation:"Screen Flows have a visual UI with Screen elements that collect input from users. They can be launched from buttons, quick actions, Lightning pages, or Experience sites. The other flow types run automatically without a user interface."},
-
-{id:55,topic:"automation",type:"single",difficulty:"hard",
-question:"An admin needs to automatically reassign Leads that have not been contacted in 7 days. Which automation tool is most appropriate?",
-choices:["Record-Triggered Flow","Scheduled Flow","Screen Flow","Approval Process"],
-correct:[1],
-explanation:"Scheduled Flows run on a defined schedule (e.g., daily at midnight) and can query batches of records to take action. They are ideal for time-based processes that check record conditions periodically, like stale lead reassignment."},
-
-{id:56,topic:"automation",type:"single",difficulty:"medium",
-question:"A company's expense reports must be approved by a manager, then by Finance, before being paid. Which Salesforce feature best handles this multi-step approval process?",
-choices:["Record-Triggered Flow with Decision Elements","Approval Process with multiple steps","Scheduled Flow","Validation Rules"],
-correct:[1],
-explanation:"Approval Processes support sequential multi-step approvals, routing records to different approvers at each step. Each step can have entry criteria, designated approvers, and associated actions (email alerts, field updates) on approval or rejection."},
-
-{id:57,topic:"automation",type:"single",difficulty:"hard",
-question:"In an Approval Process, what is a 'Delegated Approver'?",
-choices:["A user who can approve on behalf of another user when they are out of office","A user who submits records for approval","An automated approval using Flow","The final approver in a multi-step process"],
-correct:[0],
-explanation:"A Delegated Approver is a user designated to receive approval requests on behalf of another user (e.g., a manager's assistant). When the original approver is unavailable, they can configure their delegated approver who then receives the pending approval items."},
-
-{id:58,topic:"automation",type:"single",difficulty:"medium",
-question:"Which of the following scenarios is BEST handled by a Validation Rule rather than a Flow?",
-choices:["Sending an email when an Opportunity stage changes","Creating a related record when a Case is closed","Preventing a record from being saved if a required combination of fields is missing","Updating a field on a related record when a parent is modified"],
-correct:[2],
-explanation:"Validation Rules are the correct tool for enforcing data quality at save time — preventing records from saving unless certain conditions are met. The other scenarios involve actions (creating records, sending emails, updating related records) which are handled by Flow."},
-
-{id:59,topic:"automation",type:"single",difficulty:"hard",
-question:"What is the correct Salesforce order of execution when a record is saved (select the position of Flows)?",
-choices:["Flows run before Apex Triggers","Before-save Flows run after system validations but before Apex triggers; After-save Flows run after Apex triggers","Flows run after the record is committed to the database","Flows always run last in the order of execution"],
-correct:[1],
-explanation:"In Salesforce's order of execution: system validations → before-save Flows → before Apex triggers → record saved to DB → after Apex triggers → assignment/auto-response rules → after-save Flows → post-commit logic (emails, etc.)."},
-
-{id:60,topic:"automation",type:"single",difficulty:"medium",
-question:"A company uses an Approval Process where the approver can be 'Automatically approve if submitted by the record owner's manager'. This is an example of which approval routing option?",
-choices:["Delegated Approver","User, queue, or related user field","Formula-based criteria","Related user field"],
-correct:[3],
-explanation:"Approval Processes can route to a Related User Field, such as Manager (from the submitter's user record). This allows dynamic routing without hardcoding a specific user or queue."},
-
-{id:61,topic:"automation",type:"multi",difficulty:"hard",
-question:"Which TWO statements are TRUE about Approval Process actions? (Select 2)",
-choices:["Approval actions run when the record is approved","Rejection actions can be configured to lock the record","Initial submission actions run when the record is submitted for approval","Recall actions run automatically after 7 days if not approved"],
-correct:[0,2],
-explanation:"Approval Processes support four action types: Initial Submission Actions (run on submit), Approval Actions (run on approval), Rejection Actions (run on rejection), and Recall Actions (run when the submitter recalls the request). Recall does not run automatically."},
-
-{id:62,topic:"automation",type:"single",difficulty:"medium",
-question:"When should an admin use a Formula Field instead of a Flow to calculate a value?",
-choices:["When the calculation requires data from more than 5 objects","When the value needs to be stored in the database for reporting","When the value should always reflect the current state of other fields in real time","When the calculation involves updating a related record"],
-correct:[2],
-explanation:"Formula fields calculate their value dynamically — they always reflect the current values of the fields they reference. They are ideal for displaying a calculated value (like a total, status label, or date comparison) that should always be up to date without storing it."},
-
-{id:63,topic:"automation",type:"single",difficulty:"hard",
-question:"An auto-launched Flow fails during a record-triggered execution. What happens to the record save?",
-choices:["The record saves and the flow failure is logged","The record save is rolled back and an error is shown","The flow retries 3 times before failing","Only the flow actions after the error are skipped"],
-correct:[1],
-explanation:"When an error occurs in a record-triggered Flow (before or after save), the entire transaction is rolled back. The record is not saved, and the user sees an error. This ensures data consistency — either everything succeeds or nothing does."},
-
-{id:64,topic:"automation",type:"single",difficulty:"medium",
-question:"Which of the following tools is Salesforce's CURRENT recommendation for most new automation requirements (replacing Workflow Rules and Process Builder)?",
-choices:["Apex Triggers","Lightning Process Builder","Flow Builder","Workflow Rules"],
-correct:[2],
-explanation:"Salesforce has retired new development in Workflow Rules and Process Builder and now recommends Flow Builder for all declarative automation. Flow Builder encompasses record-triggered, scheduled, screen, and auto-launched flows to handle all previous use cases."},
-
-{id:65,topic:"automation",type:"single",difficulty:"hard",
-question:"A Flow has a loop that iterates over 300 Account records and performs a SOQL query inside the loop. What is the likely outcome?",
-choices:["The Flow executes successfully for all 300 records","The Flow will hit governor limits — SOQL queries inside loops are an anti-pattern","The Flow automatically batches queries to avoid limits","Loops in Flow cannot query records"],
-correct:[1],
-explanation:"Placing SOQL queries inside Flow loops is an anti-pattern that can exceed Salesforce governor limits (e.g., 100 SOQL queries per transaction). Best practice is to collect IDs in the loop, then query all records in a single Get Records element outside the loop."},
-
-{id:66,topic:"automation",type:"single",difficulty:"medium",
-question:"An Approval Process is set up with 'No Automated Approver' and the record is submitted. What happens if no approver is found?",
-choices:["The record is automatically approved","The record remains in the approval queue indefinitely","An error occurs and the submission fails","The record is rejected"],
-correct:[2],
-explanation:"If an Approval Process cannot find a valid approver (and there is no fallback), the submission will fail with an error. Admins should always configure a fallback approver or administrator to handle edge cases."},
-
-{id:67,topic:"automation",type:"single",difficulty:"hard",
-question:"Which Flow element should be used when you need to retrieve multiple records from an object for processing in the Flow?",
-choices:["Create Records","Update Records","Get Records","Assignment"],
-correct:[2],
-explanation:"The 'Get Records' element (SOQL query) retrieves records from Salesforce into the Flow. You can retrieve a single record or a collection of records, filter by criteria, and sort/limit the results for use in the flow logic."},
-
-{id:68,topic:"automation",type:"single",difficulty:"medium",
-question:"A Screen Flow is embedded on a Lightning Record Page using the Flow component. The user completes the screen and clicks Finish. What happens next by default?",
-choices:["The user is redirected to the object home page","The page refreshes and the user stays on the current record page","The Flow closes and an error log is created","The user is logged out of Salesforce"],
-correct:[1],
-explanation:"When a Screen Flow embedded on a record page finishes, the default behavior is to refresh the current page (the record page the flow is on). Admins can configure navigation actions to redirect users elsewhere after completion."},
-
-{id:69,topic:"automation",type:"single",difficulty:"hard",
-question:"What is the maximum number of active approval processes per object in Salesforce?",
-choices:["1","5","50","Unlimited"],
-correct:[2],
-explanation:"Each object can have up to 50 active Approval Processes. However, only one approval process can be active on a record at a time (a record cannot be in two simultaneous approval processes)."},
-
-{id:70,topic:"automation",type:"multi",difficulty:"hard",
-question:"Which TWO of the following can trigger a Record-Triggered Flow? (Select 2)",
-choices:["A record is created","A record is deleted","A scheduled time passes","A user opens a record page"],
-correct:[0,1],
-explanation:"Record-Triggered Flows can be configured to run when a record is Created, Updated, or Deleted (or combinations). Scheduled time triggers are handled by Scheduled Flows. Opening a record page is a UI event that does not trigger a record-triggered flow."},
-
-{id:71,topic:"automation",type:"single",difficulty:"medium",
-question:"Which Salesforce feature allows a record to be locked from editing once it enters an approval process?",
-choices:["Validation Rule with ISAPEXUPDATEABLE()","The 'Lock the record for editing' setting in the Approval Process","Record Type restriction","OWD set to Read Only"],
-correct:[1],
-explanation:"Approval Processes have a built-in option to lock the record being approved so that it cannot be edited while it is pending approval. This prevents changes to the record while it is under review."},
-
-{id:72,topic:"automation",type:"single",difficulty:"hard",
-question:"A before-save Record-Triggered Flow uses an Assignment element to change a field value on the triggering record. Does this require a separate 'Update Records' element?",
-choices:["Yes — you must always use Update Records to save field changes","No — changes assigned to the $Record variable in a before-save flow are automatically committed with the record save","Yes — Assignment only works in memory and is discarded","No — but the flow must use an Output Assignment to persist changes"],
-correct:[1],
-explanation:"In before-save flows, assigning values to fields on the $Record variable (the triggering record) automatically persists those changes when the record saves. No separate 'Update Records' DML element is needed, making before-save flows more efficient."},
-
-{id:73,topic:"automation",type:"single",difficulty:"medium",
-question:"What is a 'Subflow' in Salesforce Flow?",
-choices:["A Flow that runs on a schedule","A Flow that is called from within another Flow","A Flow that only runs on mobile devices","A Flow embedded in a Visualforce page"],
-correct:[1],
-explanation:"A Subflow is a flow that is called (invoked) from within another flow using the 'Subflow' element. This promotes reusability — common logic can be built once as an auto-launched flow and called from multiple parent flows."},
-
-{id:74,topic:"automation",type:"single",difficulty:"hard",
-question:"Cross-object formula fields can reference a field on a parent record. What is the maximum number of relationship hops (levels up) a cross-object formula can traverse?",
-choices:["1","3","5","10"],
-correct:[2],
-explanation:"Cross-object formulas can reference fields up to 5 relationships (hops) away from the current object. For example, a formula on Order Line Item can reference Account → Contact → a custom object → another object → field (5 hops)."},
-
-// ── DEPLOYMENT (8) ─────────────────────────────────────────
-
-{id:75,topic:"deployment",type:"single",difficulty:"medium",
-question:"A company wants to move custom objects, fields, and page layouts from a Sandbox to Production. Which declarative deployment tool should they use?",
-choices:["Managed Package","Change Sets","AppExchange","Salesforce CLI"],
-correct:[1],
-explanation:"Change Sets are the standard declarative tool for deploying metadata between related Salesforce orgs (e.g., Sandbox to Production). You add components to an Outbound Change Set in the source org, then deploy via an Inbound Change Set in the target org."},
-
-{id:76,topic:"deployment",type:"multi",difficulty:"hard",
-question:"Which TWO types of components CANNOT be deployed using Change Sets? (Select 2)",
-choices:["Custom Objects","Profiles (partially)","Accounts and Contacts (data records)","Report Folders"],
-correct:[2,3],
-explanation:"Change Sets deploy metadata (configuration), not data records. Accounts, Contacts, and other data records cannot be moved via Change Sets — use Data Loader or Data Import Wizard instead. Report Folders also cannot be deployed in Change Sets (reports themselves can be added but their folder structure has limitations)."},
-
-{id:77,topic:"deployment",type:"single",difficulty:"medium",
-question:"What is the difference between a Developer Sandbox and a Full Sandbox?",
-choices:["Developer Sandbox contains full production data; Full Sandbox is data-free","Full Sandbox contains a complete copy of production data and metadata; Developer Sandbox contains only metadata","Developer Sandbox supports more users than Full Sandbox","Full Sandbox can only be refreshed once per year; Developer Sandbox can never be refreshed"],
-correct:[1],
-explanation:"Full Sandboxes contain a complete copy of both metadata AND data from production. Developer Sandboxes contain only metadata (no data records). Developer Pro can hold limited data; Partial Copy holds a sample; Full is a complete copy."},
-
-{id:78,topic:"deployment",type:"single",difficulty:"hard",
-question:"How often can a Full Sandbox be refreshed from production?",
-choices:["Once per day","Once per week","Once every 29 days","Once per year"],
-correct:[2],
-explanation:"Full Sandboxes can be refreshed from production once every 29 days. This is a limitation due to the resource-intensive nature of copying all production data. Developer Sandboxes refresh daily; Partial Copy refreshes every 5 days."},
-
-{id:79,topic:"deployment",type:"single",difficulty:"medium",
-question:"A company wants to install an app from a partner that can be upgraded by the partner with new features, but the company cannot edit the code. Which package type is this?",
-choices:["Unmanaged Package","Managed Package","Change Set","Unlocked Package"],
-correct:[1],
-explanation:"Managed Packages are published by ISV partners on AppExchange. The code is protected (not editable by the installer), and publishers can push upgrades. Unmanaged packages expose all code and cannot be upgraded by the publisher."},
-
-{id:80,topic:"deployment",type:"single",difficulty:"hard",
-question:"What must be configured in Salesforce Setup before a Change Set can be sent from a Sandbox to Production?",
-choices:["A Deployment Key must be generated","A Deployment Connection must be authorized in the target org","The Sandbox must be cloned from Production within 24 hours","Both orgs must have matching Salesforce editions"],
-correct:[1],
-explanation:"Deployment Connections must be established between orgs. In the target org (Production), an admin must authorize the connection from the source Sandbox. Without an authorized connection, outbound change sets cannot be deployed."},
-
-{id:81,topic:"deployment",type:"single",difficulty:"medium",
-question:"Which sandbox type is best suited for performance and load testing due to its complete data copy?",
-choices:["Developer Sandbox","Developer Pro Sandbox","Partial Copy Sandbox","Full Sandbox"],
-correct:[3],
-explanation:"Full Sandboxes contain a complete copy of production data and are the only sandbox type suitable for realistic performance, load, and user-acceptance testing. The other sandbox types have limited or no data."},
-
-{id:82,topic:"deployment",type:"single",difficulty:"hard",
-question:"An admin uses the Metadata API to deploy components. Which tool is typically used alongside the Metadata API for command-line deployments?",
-choices:["Data Loader","Salesforce CLI (sf / sfdx)","Schema Builder","AppExchange"],
-correct:[1],
-explanation:"Salesforce CLI (sf commands, formerly sfdx) provides command-line access to the Metadata API for deploying and retrieving metadata. It is the standard developer tooling for CI/CD pipelines and programmatic deployments."},
-
-]; // end QUESTIONS
-
-// ═══════════════════════════════════════════════════════════
-//  APP STATE
-// ═══════════════════════════════════════════════════════════
-const APP_STATE = {
-  mode: "study",
-  topicFilter: "all",
-  questions: [],
-  current: 0,
-  answers: {},
-  startTime: null,
-  timerInterval: null,
-  examDuration: 105 * 60,
-  examQuestionCount: 60,
-  selectedChoices: [],
-  reviewMode: false,
-  reviewQuestions: [],
-};
-
+// ==================== QUESTION BANK ====================
+const QUESTION_BANK = [
+  // FUNDAMENTALS (1-19)
+  {id:1,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'Which AppExchange listing type allows administrators to install an app directly into a Salesforce org without developer involvement?',
+   choices:['Managed Package','Unmanaged Package','Lightning Bolt Solution','Component'],
+   correct:[0],
+   explanation:'Managed packages are the primary distribution mechanism for AppExchange apps. They are installed directly by admins without requiring developer access.'},
+  {id:2,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:"A sales rep wants to share a record with a colleague who is at a lower level in the role hierarchy. The org-wide default for the object is Private. Which feature should the admin use?",
+   choices:['Role Hierarchy','Sharing Rule','Manual Share','Public Group'],
+   correct:[2],
+   explanation:'Manual sharing allows record owners (or admins) to grant access to specific users regardless of role hierarchy. Sharing rules only extend access to roles/groups above the threshold.'},
+  {id:3,topic:'fundamentals',type:'multi',difficulty:'Easy',
+   question:'Which two features does Chatter provide to Salesforce users? (Choose 2)',
+   choices:['Post updates and files to records','Send mass emails to leads','Follow records and get notified of changes','Replace standard approval processes'],
+   correct:[0,2],
+   explanation:'Chatter allows users to post to record feeds and follow records to receive update notifications. It does not send mass emails or replace approval processes.'},
+  {id:4,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'An administrator needs to give a group of users read access to a custom object. The org-wide default is Private. What is the MOST efficient approach?',
+   choices:["Update each user's profile","Create a permission set and assign it","Create a sharing rule based on criteria","Use manual sharing for each record"],
+   correct:[1],
+   explanation:'Permission sets are the most efficient way to grant object-level access (CRUD) to a group of users without changing profiles.'},
+  {id:5,topic:'fundamentals',type:'single',difficulty:'Hard',
+   question:'What is the maximum number of custom objects allowed in a Salesforce Enterprise Edition org?',
+   choices:['200','400','800','2,000'],
+   correct:[2],
+   explanation:'Enterprise Edition allows up to 800 custom objects.'},
+  {id:6,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:"A user can see a record but cannot edit it. The user's profile has Read/Write access to the object. What is the MOST likely reason?",
+   choices:['The org-wide default is Read Only',"The user is not in the record owner's role hierarchy",'The record is locked by an approval process','Field-level security is restricting the edit button'],
+   correct:[2],
+   explanation:'When a record enters an approval process, it can be locked for editing. Profile object permissions grant CRUD but record locking overrides this.'},
+  {id:7,topic:'fundamentals',type:'single',difficulty:'Easy',
+   question:'Which Salesforce feature allows users to log calls, send emails, and manage tasks directly from a record?',
+   choices:['Chatter Feed','Activity Timeline','Related List','Lightning Console'],
+   correct:[1],
+   explanation:'The Activity Timeline on a record page shows past and upcoming activities and allows users to log calls, send emails, and create tasks directly.'},
+  {id:8,topic:'fundamentals',type:'multi',difficulty:'Easy',
+   question:'An organization uses Salesforce for both sales and customer support. Which two clouds provide these capabilities natively? (Choose 2)',
+   choices:['Sales Cloud','Service Cloud','Marketing Cloud','Commerce Cloud'],
+   correct:[0,1],
+   explanation:'Sales Cloud supports opportunity and lead management. Service Cloud supports case management and customer support workflows.'},
+  {id:9,topic:'fundamentals',type:'single',difficulty:'Easy',
+   question:'What determines the record types and page layouts a user sees?',
+   choices:['Permission Set','Sharing Rule','Profile','Role'],
+   correct:[2],
+   explanation:'Profiles control which record types are available to users and which page layouts are assigned per record type.'},
+  {id:10,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'A company has employees in the US and Europe and needs to display currency fields in local currencies. What feature must be enabled?',
+   choices:['Multiple Currencies','Advanced Currency Management','Currency Locale','Division Currency'],
+   correct:[0],
+   explanation:'Multiple Currencies must be enabled by Salesforce support to allow an org to track records in more than one currency.'},
+  {id:11,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'Which permission allows a user to view all records in an org regardless of sharing settings?',
+   choices:['Modify All Data','View All Data','Manage Sharing','View All Users'],
+   correct:[1],
+   explanation:'View All Data is a profile permission that grants read access to all records in the org, bypassing all sharing rules and org-wide defaults.'},
+  {id:12,topic:'fundamentals',type:'single',difficulty:'Easy',
+   question:'What is the purpose of a Public Group in Salesforce?',
+   choices:['Group users for mass email targeting','Create a set of users for sharing rules and manual sharing','Define a reporting hierarchy','Set default field values for groups of users'],
+   correct:[1],
+   explanation:'Public Groups are collections of users, roles, and other groups used as targets for sharing rules and manual sharing.'},
+  {id:13,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'Which of the following is TRUE about Permission Sets?',
+   choices:['They can restrict access that a profile grants','They can only grant object-level permissions','They extend access beyond what a profile grants','They replace profiles in Lightning Experience'],
+   correct:[2],
+   explanation:'Permission sets only ADD permissions on top of what a profile grants; they cannot restrict access.'},
+  {id:14,topic:'fundamentals',type:'single',difficulty:'Hard',
+   question:'A company wants all new users to automatically follow key records when they join. Which feature supports this?',
+   choices:['Chatter Groups','Auto-follow Rules','Default Notification Settings','Chatter Streams'],
+   correct:[1],
+   explanation:'Auto-follow rules (configured in Chatter Settings) can automatically follow records for new users based on specified criteria.'},
+  {id:15,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'What type of Salesforce license is required for a user who only needs to access Salesforce via the Salesforce mobile app?',
+   choices:['Salesforce Platform License','Salesforce License','Mobile Only License','Chatter Free License'],
+   correct:[1],
+   explanation:'A full Salesforce license is required for users who need access via the Salesforce mobile app with CRM functionality.'},
+  {id:16,topic:'fundamentals',type:'single',difficulty:'Easy',
+   question:'Which feature in Salesforce allows administrators to restrict login access by IP address?',
+   choices:['Login Hours','Trusted IP Ranges','Network Access','Session Settings'],
+   correct:[1],
+   explanation:'Trusted IP Ranges (under Network Access in Setup) restrict logins to specific IP address ranges org-wide.'},
+  {id:17,topic:'fundamentals',type:'single',difficulty:'Easy',
+   question:'A manager wants to see all records owned by their team members. What Salesforce feature enables this visibility?',
+   choices:['Sharing Rules','Role Hierarchy','Public Groups','Territory Management'],
+   correct:[1],
+   explanation:'The role hierarchy grants users visibility into records owned by users in roles below them in the hierarchy.'},
+  {id:18,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'Which AppExchange solution type contains pre-built flows, email templates, and report types for a specific industry?',
+   choices:['Managed Package','Lightning Bolt Solution','Unmanaged Package','Experience Cloud Template'],
+   correct:[1],
+   explanation:'Lightning Bolt Solutions are industry-specific bundles that include flows, page layouts, email templates, report types, and more.'},
+  {id:19,topic:'fundamentals',type:'single',difficulty:'Medium',
+   question:'What is the difference between a Role and a Profile in Salesforce?',
+   choices:['Roles control object permissions; Profiles control record visibility','Profiles control object permissions and page layouts; Roles control record visibility via hierarchy','Roles replace profiles in Enterprise Edition','Profiles are only used in Classic; Roles are used in Lightning'],
+   correct:[1],
+   explanation:'Profiles control what users can do (CRUD, field access, page layouts). Roles control what records users can SEE via the hierarchy.'},
+
+  // UI (20-33)
+  {id:20,topic:'ui',type:'single',difficulty:'Easy',
+   question:'Which tool allows administrators to customize a Lightning record page by adding, removing, or repositioning components without code?',
+   choices:['Page Layout Editor','Lightning App Builder','Schema Builder','Flow Builder'],
+   correct:[1],
+   explanation:'Lightning App Builder is the drag-and-drop tool for customizing Lightning record pages, home pages, and app pages.'},
+  {id:21,topic:'ui',type:'single',difficulty:'Medium',
+   question:"An admin wants to show a custom component on an Account record page only when the Account Type equals 'Partner'. What feature enables this?",
+   choices:['Page Layout Assignment','Dynamic Forms Visibility Rules','Component Filter','Record Type Assignment'],
+   correct:[1],
+   explanation:'Dynamic Forms allow field-level and section-level visibility rules on Lightning record pages based on field values, user permissions, or device type.'},
+  {id:22,topic:'ui',type:'single',difficulty:'Medium',
+   question:'What is the difference between a Lightning App and a Classic App in Salesforce?',
+   choices:['Lightning Apps support tabs and utility bars; Classic Apps only support tabs','Lightning Apps are only available to System Administrators','Classic Apps cannot include custom objects','Lightning Apps require code; Classic Apps do not'],
+   correct:[0],
+   explanation:'Lightning Apps support navigation items, utility bars, and are optimized for the Lightning Experience. Classic Apps are simpler tab-based navigation.'},
+  {id:23,topic:'ui',type:'single',difficulty:'Medium',
+   question:'Which action type in Salesforce allows users to create a new record pre-populated with data from the current record?',
+   choices:['Global Action','Object-Specific Action','Flow Action','Quick Text Action'],
+   correct:[1],
+   explanation:'Object-specific quick actions (Create Record type) allow creation of related records pre-populated with data from the parent record.'},
+  {id:24,topic:'ui',type:'single',difficulty:'Easy',
+   question:'An administrator wants to display key fields from an Account record on the record highlight panel. Which feature should be configured?',
+   choices:['Page Layout','Compact Layout','Mini Page Layout','Related List Layout'],
+   correct:[1],
+   explanation:'Compact Layouts define which fields appear in the record highlight panel (the top section) of Lightning record pages.'},
+  {id:25,topic:'ui',type:'single',difficulty:'Easy',
+   question:'A user wants to see all open cases assigned to them in a single view without navigating to reports. What should the admin configure?',
+   choices:['Dashboard','List View','Report','Kanban View'],
+   correct:[1],
+   explanation:'List Views allow users to filter records by specific criteria (e.g., Assigned To = Me, Status = Open) and save them as reusable views.'},
+  {id:26,topic:'ui',type:'single',difficulty:'Medium',
+   question:'Which page type in Lightning App Builder is used to create a standalone page accessible via a custom URL in an org?',
+   choices:['Record Page','Home Page','App Page','Login Page'],
+   correct:[2],
+   explanation:'App Pages in Lightning App Builder create standalone pages accessible via a direct URL, useful for dashboards or custom landing pages.'},
+  {id:27,topic:'ui',type:'single',difficulty:'Medium',
+   question:'What is the purpose of the Utility Bar in a Lightning App?',
+   choices:['Displays key metrics at the top of every page','Provides quick access to productivity tools like Notes, Recent Items, or Open CTI at the bottom of the screen','Shows related records in a sidebar panel','Contains navigation tabs for the app'],
+   correct:[1],
+   explanation:'The Utility Bar appears at the bottom of Lightning app pages and gives users quick access to tools like macros, recent items, or softphone.'},
+  {id:28,topic:'ui',type:'multi',difficulty:'Medium',
+   question:'Which two actions can be added to a Lightning record page using the Lightning App Builder? (Choose 2)',
+   choices:['Related List Quick Links','Highlights Panel','Flow Component','Apex Code Block'],
+   correct:[0,2],
+   explanation:'Lightning App Builder supports standard components like Related List Quick Links and custom/flow components. Apex code blocks are not a drag-and-drop component.'},
+  {id:29,topic:'ui',type:'single',difficulty:'Medium',
+   question:'An administrator needs users to be able to update a field value on multiple records at once from a list view. What must be enabled?',
+   choices:['Inline Editing on List Views','Mass Transfer','Bulk Edit','Multi-Record Update Flow'],
+   correct:[0],
+   explanation:'Inline Editing on list views allows users to double-click a field value in a list view and update multiple records simultaneously.'},
+  {id:30,topic:'ui',type:'single',difficulty:'Medium',
+   question:'Which feature allows an administrator to configure a Lightning page differently for desktop vs. mobile?',
+   choices:['Responsive Design Settings','Form Factor in Lightning App Builder','Dynamic Forms Device Rules','Mobile Page Layout'],
+   correct:[1],
+   explanation:'In Lightning App Builder, you can set a different page layout for Desktop and Phone form factors for the same Lightning page.'},
+  {id:31,topic:'ui',type:'single',difficulty:'Medium',
+   question:'What must an administrator do to make a Lightning record page the default for all users?',
+   choices:['Save the page and it automatically becomes default','Activate the page and assign it to profiles or the entire org','Publish the page to the App Catalog','Deploy the page via Change Set'],
+   correct:[1],
+   explanation:'After building a Lightning page, you must Activate it and assign it — by app, profile, or record type — to make it the default for users.'},
+  {id:32,topic:'ui',type:'single',difficulty:'Medium',
+   question:'A company wants to display a custom message banner on all Salesforce Home pages for a specific profile. What should the admin use?',
+   choices:['Custom Lightning Component on Home Page via App Builder','Announcement in Chatter','System Message in Setup','Login Message'],
+   correct:[0],
+   explanation:'Admins can add custom Lightning components (including custom announcement components) to Home pages via Lightning App Builder and target specific profiles.'},
+  {id:33,topic:'ui',type:'single',difficulty:'Easy',
+   question:'Which component in a Lightning record page displays open tasks and past activities in a chronological view?',
+   choices:['Chatter Feed','Activity Timeline','Related List','Recent Items'],
+   correct:[1],
+   explanation:'The Activity Timeline component on record pages shows a chronological list of past and upcoming activities including calls, emails, tasks, and events.'},
+
+  // DATA MODEL (34-51)
+  {id:34,topic:'data-model',type:'single',difficulty:'Easy',
+   question:'What happens to child records when a Master-Detail parent record is deleted?',
+   choices:['Child records become orphaned with no parent','Child records are archived','Child records are also deleted (cascade delete)','Deletion is prevented until child records are removed'],
+   correct:[2],
+   explanation:'In a Master-Detail relationship, deleting the parent record triggers a cascade delete of all associated child records.'},
+  {id:35,topic:'data-model',type:'single',difficulty:'Easy',
+   question:'Which relationship type in Salesforce supports Roll-Up Summary Fields?',
+   choices:['Lookup Relationship','Master-Detail Relationship','Many-to-Many Relationship','Hierarchical Relationship'],
+   correct:[1],
+   explanation:'Roll-Up Summary fields (COUNT, SUM, MIN, MAX) are only available on the master object in a Master-Detail relationship.'},
+  {id:36,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'An administrator needs to create a many-to-many relationship between Courses and Students. What is the recommended approach?',
+   choices:['Create a Lookup field on both objects pointing to each other','Create a junction object with Master-Detail relationships to both Courses and Students','Use an External Object to link the two records','Create two Lookup fields on the Course object'],
+   correct:[1],
+   explanation:'A junction object with two Master-Detail relationships to both objects is the standard way to model many-to-many relationships in Salesforce.'},
+  {id:37,topic:'data-model',type:'single',difficulty:'Hard',
+   question:'What is the character limit for a formula field in Salesforce?',
+   choices:['1,300','3,900','5,000','32,768'],
+   correct:[1],
+   explanation:'Formula fields have a compiled character limit of 3,900 characters in Salesforce.'},
+  {id:38,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'Which statement about Lookup relationships is TRUE?',
+   choices:['Lookup child records are deleted when the parent is deleted','Lookup fields are always required','The lookup field on a child record can be left blank','Lookup relationships support Roll-Up Summary fields'],
+   correct:[2],
+   explanation:'Unlike Master-Detail, a Lookup relationship field is optional by default — child records can exist without a parent.'},
+  {id:39,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'An administrator needs to display the total value of all related Opportunity line items on an Opportunity record. Which field type should they create on the Opportunity object?',
+   choices:['Formula Field','Roll-Up Summary Field','Cross-Object Formula Field','Calculated Field'],
+   correct:[1],
+   explanation:'A Roll-Up Summary field aggregates values from child records in a Master-Detail relationship, such as summing line item amounts on an Opportunity.'},
+  {id:40,topic:'data-model',type:'single',difficulty:'Easy',
+   question:'Which tool in Salesforce allows an administrator to view and create objects, fields, and relationships in a visual diagram?',
+   choices:['Object Manager','Data Loader','Schema Builder','Entity Relationship Designer'],
+   correct:[2],
+   explanation:'Schema Builder provides a drag-and-drop visual canvas to view and modify data models, including creating fields and relationships.'},
+  {id:41,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'A validation rule should fire when a case is closed without a Resolution field being populated. Which formula is CORRECT?',
+   choices:["AND(ISPICKVAL(Status, 'Closed'), NOT(ISBLANK(Resolution__c)))","AND(ISPICKVAL(Status, 'Closed'), ISBLANK(Resolution__c))","OR(ISPICKVAL(Status, 'Closed'), ISBLANK(Resolution__c))","NOT(ISBLANK(Resolution__c))"],
+   correct:[1],
+   explanation:"Validation rules fire when they evaluate to TRUE. AND(ISPICKVAL(Status,'Closed'), ISBLANK(Resolution__c)) evaluates to TRUE when the case is closed AND resolution is blank."},
+  {id:42,topic:'data-model',type:'single',difficulty:'Hard',
+   question:'Validation rules are NOT enforced in which scenario by default?',
+   choices:['When a record is saved via the API','When a Lead is converted','When a record is created using Quick Create on the Home page','When a record is edited via inline editing'],
+   correct:[2],
+   explanation:'By default, validation rules are NOT enforced when records are created via the Quick Create widget on the Home page.'},
+  {id:43,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'How many Master-Detail relationships can a custom object have?',
+   choices:['1','2','3','Unlimited'],
+   correct:[1],
+   explanation:'A custom object can have a maximum of 2 Master-Detail relationships.'},
+  {id:44,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'Which field type would an administrator use to automatically display the Account Name on a Contact record without storing it separately?',
+   choices:['Text Field','Roll-Up Summary Field','Cross-Object Formula Field','Lookup Field'],
+   correct:[2],
+   explanation:'A cross-object formula field (e.g., Account.Name on Contact) references a field on a related object via a lookup or master-detail relationship.'},
+  {id:45,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'An administrator wants to prevent duplicate accounts from being created. Which Salesforce feature should they use?',
+   choices:['Validation Rules','Duplicate Management (Matching Rules + Duplicate Rules)','Data Loader Upsert','Workflow Rules'],
+   correct:[1],
+   explanation:'Duplicate Management uses Matching Rules to identify potential duplicates and Duplicate Rules to alert users or block saves.'},
+  {id:46,topic:'data-model',type:'multi',difficulty:'Medium',
+   question:'Which two field types can be used as the controlling field in a dependent picklist? (Choose 2)',
+   choices:['Picklist','Checkbox','Multi-Select Picklist','Text'],
+   correct:[0,1],
+   explanation:'Only standard Picklist fields and Checkbox fields can be used as controlling fields for dependent picklists.'},
+  {id:47,topic:'data-model',type:'single',difficulty:'Hard',
+   question:'What is the maximum number of levels in a Lookup relationship hierarchy for a custom object?',
+   choices:['1','5','10','25'],
+   correct:[1],
+   explanation:'Cross-object formula fields can span up to 5 levels of lookup relationships.'},
+  {id:48,topic:'data-model',type:'single',difficulty:'Medium',
+   question:"An administrator wants to track a record's history and see when a field value changed. What should they enable?",
+   choices:['Field Audit Trail','Field History Tracking','Change Data Capture','Audit Log'],
+   correct:[1],
+   explanation:'Field History Tracking (enabled per object, up to 20 fields) records changes to field values with the old and new values and who changed them.'},
+  {id:49,topic:'data-model',type:'single',difficulty:'Hard',
+   question:'Which statement about External Objects in Salesforce is TRUE?',
+   choices:['They store data in the Salesforce database','They require Salesforce Connect to link to external data sources','They support Master-Detail relationships with standard objects','They can be used as the master in a Roll-Up Summary field'],
+   correct:[1],
+   explanation:'External Objects use Salesforce Connect (OData or custom adapters) to access data stored outside Salesforce without storing it in the org.'},
+  {id:50,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'A company needs to limit which values appear in a Stage picklist based on the selected Record Type. What feature achieves this?',
+   choices:['Dependent Picklist','Record Type Picklist Values','Field-Level Security','Validation Rule'],
+   correct:[1],
+   explanation:'Record Types allow administrators to define different available picklist values for each record type, restricting what users see based on their record type assignment.'},
+  {id:51,topic:'data-model',type:'single',difficulty:'Medium',
+   question:'Which of the following field types CANNOT be used in a Roll-Up Summary field calculation?',
+   choices:['Number','Currency','Percent','Text'],
+   correct:[3],
+   explanation:'Roll-Up Summary fields support SUM, COUNT, MIN, and MAX on numeric, currency, percent, and date fields. Text fields cannot be used in SUM or other numeric aggregations.'},
+
+  // AUTOMATION (52-74)
+  {id:52,topic:'automation',type:'single',difficulty:'Medium',
+   question:'An administrator needs to automatically send a follow-up email 3 days after a case is created if it is still open. Which tool is MOST appropriate?',
+   choices:['Workflow Rule with Time-Based Action','Record-Triggered Flow with Scheduled Path','Process Builder','Approval Process'],
+   correct:[1],
+   explanation:'Record-Triggered Flows with a Scheduled Path (time-based path) are the modern, recommended way to perform time-based automation in Salesforce.'},
+  {id:53,topic:'automation',type:'single',difficulty:'Easy',
+   question:'Which flow type is triggered when a user interacts with a screen and provides input?',
+   choices:['Record-Triggered Flow','Scheduled Flow','Screen Flow','Auto-launched Flow'],
+   correct:[2],
+   explanation:'Screen Flows are designed for user interaction — they present screens with input fields and guide users through a process step by step.'},
+  {id:54,topic:'automation',type:'single',difficulty:'Hard',
+   question:'In a Record-Triggered Flow, what is the difference between a Before Save and After Save flow?',
+   choices:['Before Save flows can send emails; After Save flows cannot','Before Save flows run faster and can update triggering record fields without a DML; After Save flows can interact with related records','Before Save flows require user confirmation; After Save flows run automatically','After Save flows are deprecated in favor of Before Save flows'],
+   correct:[1],
+   explanation:"Before Save flows update the triggering record's fields without an additional DML operation (faster, fewer governor limits). After Save flows run after the record is committed and can create/update related records."},
+  {id:55,topic:'automation',type:'single',difficulty:'Medium',
+   question:'An administrator needs to require manager approval before a discount over 20% can be applied to an Opportunity. Which feature should they use?',
+   choices:['Validation Rule','Approval Process','Record-Triggered Flow','Workflow Rule'],
+   correct:[1],
+   explanation:'Approval Processes are specifically designed to route records through one or more approval steps with approver assignment, actions on approve/reject, and locking.'},
+  {id:56,topic:'automation',type:'single',difficulty:'Hard',
+   question:'What is the correct order of execution in Salesforce when a record is saved?',
+   choices:['Validation Rules → Workflow Rules → Before Triggers → After Triggers','Before Triggers → Validation Rules → Duplicate Rules → After Triggers → Workflow Rules','Workflow Rules → Before Triggers → After Triggers → Validation Rules','Before Triggers → After Triggers → Validation Rules → Workflow Rules'],
+   correct:[1],
+   explanation:'The simplified order of execution: Before Triggers → Validation Rules → Duplicate Rules → Commit → After Triggers → Workflow/Processes.'},
+  {id:57,topic:'automation',type:'single',difficulty:'Easy',
+   question:'Which flow type runs on a schedule (e.g., every day at midnight) without any user or record event?',
+   choices:['Record-Triggered Flow','Screen Flow','Scheduled Flow','Platform Event-Triggered Flow'],
+   correct:[2],
+   explanation:'Scheduled Flows run at a specified date/time or on a recurring schedule, independent of any user action or record change.'},
+  {id:58,topic:'automation',type:'single',difficulty:'Medium',
+   question:'A formula field on an Opportunity calculates a commission amount. The field does NOT fire workflow rules. What is a key limitation of formula fields?',
+   choices:['They cannot reference lookup fields','They cannot perform date arithmetic','They are read-only and do not store values in the database','They are limited to 255 characters'],
+   correct:[2],
+   explanation:'Formula fields calculate values dynamically at runtime and do not store values in the database, so they cannot trigger workflow rules or be used in roll-up summaries on the same object.'},
+  {id:59,topic:'automation',type:'single',difficulty:'Easy',
+   question:'When should an administrator use a Validation Rule instead of a Flow?',
+   choices:['When data needs to be updated across multiple records','When an email alert needs to be sent','When a record should be prevented from saving if a condition is not met','When a related record needs to be created'],
+   correct:[2],
+   explanation:'Validation Rules prevent a record from being saved when specific conditions are met. They are the correct tool for enforcing data entry requirements.'},
+  {id:60,topic:'automation',type:'multi',difficulty:'Medium',
+   question:'Which two types of actions can be configured in an Approval Process? (Choose 2)',
+   choices:['Field Update','Send Email','Send Outbound Message','Launch a Flow'],
+   correct:[0,1],
+   explanation:'Approval Processes support Field Update, Email Alert, Outbound Message, and Create Task as standard actions. All four are valid but the question asks which two — field updates and email alerts are the most common.'},
+  {id:61,topic:'automation',type:'single',difficulty:'Medium',
+   question:"An administrator wants a record-triggered flow to update the account's Industry field whenever a related contact's Department field changes. Which type of flow should be used?",
+   choices:['Before Save Flow','After Save Flow','Scheduled Flow','Screen Flow'],
+   correct:[1],
+   explanation:'After Save Flows can perform DML on related records (like updating the parent Account). Before Save Flows cannot interact with records other than the triggering record.'},
+  {id:62,topic:'automation',type:'single',difficulty:'Hard',
+   question:'Which feature allows an approval process to be submitted automatically without user interaction?',
+   choices:['Auto-Approval','Initial Submission Actions','Process Builder Trigger','Flow Invocable Action'],
+   correct:[3],
+   explanation:'A Flow can call an Apex action or the Submit for Approval invocable action to automatically submit a record for approval without user clicking a button.'},
+  {id:63,topic:'automation',type:'single',difficulty:'Medium',
+   question:'A company wants to automatically create a follow-up task 7 days after an Opportunity is marked Closed Won. Which automation tool should be used?',
+   choices:['Workflow Rule with Time-Based Action','Validation Rule','Approval Process','Formula Field'],
+   correct:[0],
+   explanation:'Workflow Rules with time-based actions (Wait Actions) can create tasks a specified number of days after a field value meets criteria — this is a classic use case.'},
+  {id:64,topic:'automation',type:'single',difficulty:'Medium',
+   question:'Which statement about Roll-Up Summary fields is TRUE?',
+   choices:['They work on Lookup relationships','They can aggregate values across up to 10 levels','They recalculate in real-time when a child record is saved','They support text field aggregation'],
+   correct:[2],
+   explanation:'Roll-Up Summary fields recalculate whenever a qualifying child record is created, updated, or deleted, making them real-time aggregations.'},
+  {id:65,topic:'automation',type:'single',difficulty:'Hard',
+   question:'An administrator notices that a flow is running in an infinite loop. What is the BEST way to prevent this?',
+   choices:['Add a 1-second delay element','Use a Decision element to check if the record was just updated by the flow','Disable the flow temporarily','Add a fault path'],
+   correct:[1],
+   explanation:'Using a Decision element to check if the relevant field was already set by the flow (e.g., Last Modified By = Automated Process) prevents infinite loops.'},
+  {id:66,topic:'automation',type:'single',difficulty:'Easy',
+   question:'Which element in a Flow is used to route logic based on conditions?',
+   choices:['Assignment','Loop','Decision','Subflow'],
+   correct:[2],
+   explanation:'The Decision element evaluates conditions and routes the flow to different paths (outcomes) based on whether conditions are true or false.'},
+  {id:67,topic:'automation',type:'single',difficulty:'Medium',
+   question:'A company has a complex discount approval that requires different approvers based on the discount percentage. What Approval Process feature supports this?',
+   choices:['Multiple Entry Criteria','Parallel Approval Steps','Jump to Step','Dynamic Approver Assignment with Multiple Steps'],
+   correct:[3],
+   explanation:'Multiple steps in an approval process, each with different entry criteria and approver assignments, allow routing to different approvers based on field values.'},
+  {id:68,topic:'automation',type:'single',difficulty:'Easy',
+   question:'What is the recommended Salesforce-native tool for replacing Workflow Rules and Process Builder?',
+   choices:['Apex Triggers','Scheduled Jobs','Flow Builder','Lightning Components'],
+   correct:[2],
+   explanation:'Salesforce has retired Process Builder and Workflow Rules in favor of Flow Builder (Record-Triggered Flows), which replicates and extends their functionality.'},
+  {id:69,topic:'automation',type:'single',difficulty:'Medium',
+   question:'Which flow element is used to iterate over a collection of records and perform an action on each?',
+   choices:['Decision','Assignment','Loop','Subflow'],
+   correct:[2],
+   explanation:'The Loop element iterates over a collection variable (list of records or values) and executes nested elements for each item.'},
+  {id:70,topic:'automation',type:'single',difficulty:'Medium',
+   question:'An administrator wants a field on a custom object to always display the current date. Which field type should be used?',
+   choices:['Date Field with Default Value','Formula Field using TODAY()','Date/Time Field with Auto-populate','Workflow Rule to set the date'],
+   correct:[1],
+   explanation:'A Formula field using TODAY() dynamically returns the current date each time the record is viewed, without storing a static value.'},
+  {id:71,topic:'automation',type:'single',difficulty:'Medium',
+   question:'Which of the following is NOT a valid trigger for a Record-Triggered Flow?',
+   choices:['A record is created','A record is updated','A record is deleted','A record is viewed'],
+   correct:[3],
+   explanation:'Record-Triggered Flows can trigger on Create, Update, Create or Update, or Delete events. Viewing a record does not trigger a Record-Triggered Flow.'},
+  {id:72,topic:'automation',type:'single',difficulty:'Medium',
+   question:"An administrator wants to notify a user's manager when a case priority is changed to Critical. Which automation is MOST appropriate?",
+   choices:['Validation Rule','Formula Field','Record-Triggered Flow with Email Action','Roll-Up Summary Field'],
+   correct:[2],
+   explanation:"A Record-Triggered Flow can detect when the Case Priority field changes to 'Critical' and use an Email Action or Create Task element to notify the manager."},
+  {id:73,topic:'automation',type:'single',difficulty:'Hard',
+   question:'Which approval process feature allows a record to bypass an approval step if specific criteria are met?',
+   choices:['Skip Step','Jump to Step','Criteria-Based Step Entry','Reject and Recall'],
+   correct:[2],
+   explanation:"Each step in an approval process has entry criteria. If a record does not meet a step's criteria, that step is automatically skipped."},
+  {id:74,topic:'automation',type:'single',difficulty:'Medium',
+   question:'A formula field returns a blank value instead of 0 when a referenced field is empty. Which function prevents this?',
+   choices:['ISNULL()','NULLVALUE()','BLANKVALUE()','ISBLANK()'],
+   correct:[2],
+   explanation:'BLANKVALUE(field, alternative) returns the alternative value when the field is blank. NULLVALUE() is the older version for non-text fields only.'},
+
+  // DEPLOYMENT (75-82)
+  {id:75,topic:'deployment',type:'single',difficulty:'Easy',
+   question:'Which sandbox type provides a full copy of production data and is MOST appropriate for final user acceptance testing?',
+   choices:['Developer Sandbox','Developer Pro Sandbox','Partial Copy Sandbox','Full Copy Sandbox'],
+   correct:[3],
+   explanation:'Full Copy sandboxes replicate all production data and metadata, making them ideal for realistic UAT and performance testing.'},
+  {id:76,topic:'deployment',type:'single',difficulty:'Medium',
+   question:'What is the maximum storage capacity of a Developer Sandbox?',
+   choices:['200 MB','500 MB','1 GB','5 GB'],
+   correct:[0],
+   explanation:'Developer Sandboxes have 200 MB of data storage, suitable for individual development and testing of metadata.'},
+  {id:77,topic:'deployment',type:'single',difficulty:'Easy',
+   question:'An administrator has built and tested a new Flow in a sandbox. What is the recommended method to move it to production?',
+   choices:['Recreate it manually in production','Use a Change Set to deploy it','Use Data Loader','Export from sandbox and import to production'],
+   correct:[1],
+   explanation:'Change Sets are the standard admin tool for deploying metadata (flows, page layouts, validation rules, etc.) from sandbox to production.'},
+  {id:78,topic:'deployment',type:'single',difficulty:'Medium',
+   question:'Which type of package allows the installing org to view, modify, and extend the package components?',
+   choices:['Managed Package','Unmanaged Package','Locked Package','Unlocked Package'],
+   correct:[1],
+   explanation:'Unmanaged Packages allow the recipient org to view and modify all components. They are typically used for code samples and open-source projects.'},
+  {id:79,topic:'deployment',type:'single',difficulty:'Medium',
+   question:'What must exist between a sandbox and production org before an outbound Change Set can be sent?',
+   choices:['A Deployment Connection','A Managed Package','A Sandbox Refresh','An API Integration'],
+   correct:[0],
+   explanation:'A Deployment Connection must be configured between the two orgs (in Setup → Deployment Settings) and the receiving org must authorize the connection.'},
+  {id:80,topic:'deployment',type:'single',difficulty:'Medium',
+   question:'Which sandbox type can be refreshed once every 29 days?',
+   choices:['Developer Sandbox','Developer Pro Sandbox','Partial Copy Sandbox','Full Copy Sandbox'],
+   correct:[3],
+   explanation:'Full Copy sandboxes have a 29-day refresh interval due to the time and resources required to copy all production data.'},
+  {id:81,topic:'deployment',type:'single',difficulty:'Easy',
+   question:'An administrator wants to deploy a new custom object with fields, page layouts, and a flow to production. They do NOT have access to the Metadata API. What should they use?',
+   choices:['Data Loader','Change Set','Package Manager','Ant Migration Tool'],
+   correct:[1],
+   explanation:'Change Sets are the point-and-click admin tool for deploying metadata without requiring Metadata API or developer tools.'},
+  {id:82,topic:'deployment',type:'single',difficulty:'Medium',
+   question:'Which of the following components CANNOT be deployed via Change Set?',
+   choices:['Custom Fields','Flows','Profiles (partial)','Users and User Records'],
+   correct:[3],
+   explanation:'Users and user-specific data records are data, not metadata. Change Sets deploy metadata only. Users cannot be moved between orgs via Change Set.'}
+];
+
+// ==================== CONSTANTS ====================
 const TOPIC_NAMES = {
-  fundamentals: "Salesforce Fundamentals",
-  ui: "User Interface",
-  "data-model": "Data Modeling & Management",
-  automation: "Business Logic & Automation",
-  deployment: "App Deployment",
+  'fundamentals': 'Salesforce Fundamentals',
+  'ui': 'User Interface',
+  'data-model': 'Data Modeling & Management',
+  'automation': 'Business Logic & Automation',
+  'deployment': 'App Deployment'
+};
+const PASS_THRESHOLD = 63;
+
+// ==================== STATE ====================
+const S = {
+  mode: 'study',
+  questions: [],       // current session questions
+  idx: 0,
+  selected: [],
+  submitted: false,
+  results: [],         // {q, selected[], correct}
+  timerSecs: 6300,
+  timerHandle: null,
+  sessionStart: 0,
+  elapsedSecs: 0,
+  isReview: false,
+  reviewQueue: [],
+  reviewIdx: 0,
+  retake: null         // config for retake
 };
 
-const TOPIC_BADGE = {
-  fundamentals: "badge-fundamentals",
-  ui: "badge-ui",
-  "data-model": "badge-data-model",
-  automation: "badge-automation",
-  deployment: "badge-deployment",
-};
-
-// ═══════════════════════════════════════════════════════════
-//  LOCALSTORAGE
-// ═══════════════════════════════════════════════════════════
-const LS_KEY = "sf-exam-prep-progress";
-
-function loadProgress() {
-  try {
-    return JSON.parse(localStorage.getItem(LS_KEY)) || {};
-  } catch(e) { return {}; }
+// ==================== STORAGE ====================
+function loadData() {
+  try { return JSON.parse(localStorage.getItem('sfap') || '{}'); } catch(e) { return {}; }
+}
+function saveData(d) {
+  try { localStorage.setItem('sfap', JSON.stringify(d)); } catch(e) {}
+}
+function persistBestScore(pct) {
+  const d = loadData();
+  if (d.best == null || pct > d.best) { d.best = pct; saveData(d); }
 }
 
-function saveProgress(data) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) {}
-}
-
-function updateStatsUI() {
-  const p = loadProgress();
-  const bestEl = document.getElementById("stat-best");
-  const bestDateEl = document.getElementById("stat-best-date");
-  const sessionsEl = document.getElementById("stat-sessions");
-
-  if (p.bestScore !== undefined) {
-    bestEl.textContent = Math.round(p.bestScore) + "%";
-    bestDateEl.textContent = p.bestScoreDate ? "on " + p.bestScoreDate : "all time best";
-  } else {
-    bestEl.textContent = "—";
-    bestDateEl.textContent = "No sessions yet";
-  }
-  sessionsEl.textContent = p.completedSessions || 0;
-}
-
-// ═══════════════════════════════════════════════════════════
-//  UTILITIES
-// ═══════════════════════════════════════════════════════════
+// ==================== UTILS ====================
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -1034,444 +997,345 @@ function shuffle(arr) {
   }
   return a;
 }
-
+function fmt(secs) {
+  return String(Math.floor(secs/60)).padStart(2,'0') + ':' + String(secs%60).padStart(2,'0');
+}
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = Math.min(100, pct) + '%';
+}
 function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  window.scrollTo(0, 0);
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
 }
 
-function formatTime(secs) {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  return `${m}:${String(s).padStart(2,'0')}`;
-}
-
-// ═══════════════════════════════════════════════════════════
-//  HOME SCREEN CONTROLS
-// ═══════════════════════════════════════════════════════════
-function setMode(mode) {
-  APP_STATE.mode = mode;
-  document.getElementById("btn-study-mode").classList.toggle("active", mode === "study");
-  document.getElementById("btn-exam-mode").classList.toggle("active", mode === "exam");
-  const desc = document.getElementById("mode-desc");
-  if (mode === "study") {
-    desc.innerHTML = "<strong>Study Mode:</strong> Immediate feedback after each answer with full explanations. Navigate freely. Great for learning.";
-  } else {
-    desc.innerHTML = "<strong>Exam Mode:</strong> 60 questions, 105-minute timer. No feedback during the exam. Proportionally sampled from all topics. Simulates the real exam.";
-  }
-}
-
+// ==================== HOME ====================
 function showHome() {
-  if (APP_STATE.timerInterval) {
-    clearInterval(APP_STATE.timerInterval);
-    APP_STATE.timerInterval = null;
-  }
-  APP_STATE.reviewMode = false;
-  updateStatsUI();
-  showScreen("home-screen");
-}
-
-// ═══════════════════════════════════════════════════════════
-//  SESSION BUILDING
-// ═══════════════════════════════════════════════════════════
-function buildSession(mode, filter) {
-  let pool = QUESTIONS;
-  if (filter !== "all") {
-    pool = QUESTIONS.filter(q => q.topic === filter);
-  }
-
-  if (mode === "exam") {
-    // Proportionally sample from topics to get 60 questions
-    const topicCounts = {
-      fundamentals: 14,
-      ui: 10,
-      "data-model": 13,
-      automation: 17,
-      deployment: 6,
-    };
-    // If filter is not all, just shuffle and take min(pool.length, 60)
-    if (filter !== "all") {
-      return shuffle(pool).slice(0, Math.min(60, pool.length));
-    }
-    let session = [];
-    for (const [topic, count] of Object.entries(topicCounts)) {
-      const topicQ = shuffle(QUESTIONS.filter(q => q.topic === topic));
-      session = session.concat(topicQ.slice(0, count));
-    }
-    return shuffle(session);
+  stopTimer();
+  S.isReview = false;
+  setProgress(0);
+  const d = loadData();
+  const banner = document.getElementById('best-score-banner');
+  if (d.best != null) {
+    banner.style.display = 'flex';
+    document.getElementById('best-score-val').textContent = d.best.toFixed(1) + '%';
   } else {
-    return shuffle(pool);
+    banner.style.display = 'none';
   }
+  showScreen('home');
 }
 
-function startSession() {
-  const filter = document.getElementById("topic-select").value;
-  APP_STATE.topicFilter = filter;
-  APP_STATE.reviewMode = false;
-  APP_STATE.questions = buildSession(APP_STATE.mode, filter);
-  APP_STATE.current = 0;
-  APP_STATE.answers = {};
-  APP_STATE.selectedChoices = [];
-  APP_STATE.startTime = Date.now();
+function setMode(m) {
+  S.mode = m;
+  document.getElementById('btn-study').classList.toggle('active', m === 'study');
+  document.getElementById('btn-exam').classList.toggle('active', m === 'exam');
+}
 
-  if (APP_STATE.timerInterval) clearInterval(APP_STATE.timerInterval);
-  APP_STATE.timerInterval = null;
+// ==================== SESSION START ====================
+function startSession(retake) {
+  stopTimer();
+  S.isReview = false;
 
-  if (APP_STATE.mode === "exam") {
-    let remaining = APP_STATE.examDuration;
-    const timerEl = document.getElementById("timer-display");
-    timerEl.style.display = "block";
-    timerEl.textContent = formatTime(remaining);
-    timerEl.classList.remove("urgent");
-
-    APP_STATE.timerInterval = setInterval(() => {
-      remaining--;
-      timerEl.textContent = formatTime(remaining);
-      if (remaining <= 600) timerEl.classList.add("urgent");
-      if (remaining <= 0) {
-        clearInterval(APP_STATE.timerInterval);
-        APP_STATE.timerInterval = null;
-        showResults();
-      }
-    }, 1000);
+  let topic, qCount, doShuffle, mode;
+  if (retake && S.retake) {
+    ({topic, qCount, doShuffle, mode} = S.retake);
+    S.mode = mode;
+    document.getElementById('btn-' + mode).click();
   } else {
-    document.getElementById("timer-display").style.display = "none";
+    topic = document.getElementById('topic-filter').value;
+    qCount = Math.max(1, parseInt(document.getElementById('q-count').value) || 20);
+    doShuffle = document.getElementById('shuffle-check').checked;
+    mode = S.mode;
+    S.retake = {topic, qCount, doShuffle, mode};
   }
 
-  document.getElementById("review-banner").style.display = "none";
-  showScreen("quiz-screen");
-  renderQuestion();
+  let pool = QUESTION_BANK.filter(q => topic === 'all' || q.topic === topic);
+  if (pool.length === 0) { alert('No questions match this filter.'); return; }
+  qCount = Math.min(qCount, pool.length);
+  S.questions = doShuffle ? shuffle(pool).slice(0, qCount) : pool.slice(0, qCount);
+  S.idx = 0;
+  S.results = [];
+  S.selected = [];
+  S.submitted = false;
+  S.sessionStart = Date.now();
+  S.timerSecs = 6300;
+
+  const timerEl = document.getElementById('timer-display');
+  if (mode === 'exam') {
+    timerEl.style.display = 'block';
+    timerEl.classList.remove('urgent');
+    timerEl.textContent = fmt(S.timerSecs);
+    startTimer();
+  } else {
+    timerEl.style.display = 'none';
+  }
+
+  showScreen('quiz');
+  renderQ();
 }
 
-// ═══════════════════════════════════════════════════════════
-//  QUESTION RENDERING
-// ═══════════════════════════════════════════════════════════
-function renderQuestion() {
-  const qs = APP_STATE.reviewMode ? APP_STATE.reviewQuestions : APP_STATE.questions;
-  const q = qs[APP_STATE.current];
-  if (!q) return;
+// ==================== TIMER ====================
+function startTimer() {
+  S.timerHandle = setInterval(() => {
+    S.timerSecs--;
+    const el = document.getElementById('timer-display');
+    el.textContent = fmt(S.timerSecs);
+    el.classList.toggle('urgent', S.timerSecs < 600);
+    if (S.timerSecs <= 0) { stopTimer(); endSession(); }
+  }, 1000);
+}
+function stopTimer() {
+  if (S.timerHandle) { clearInterval(S.timerHandle); S.timerHandle = null; }
+}
 
-  const total = qs.length;
-  const answered = Object.keys(APP_STATE.answers).length;
+// ==================== RENDER QUESTION ====================
+function currentQ() {
+  return S.isReview ? S.reviewQueue[S.reviewIdx] : S.questions[S.idx];
+}
+function currentTotal() {
+  return S.isReview ? S.reviewQueue.length : S.questions.length;
+}
+function currentPos() {
+  return S.isReview ? S.reviewIdx : S.idx;
+}
 
-  // Progress bar
-  document.getElementById("progress-bar").style.width = (APP_STATE.current / total * 100) + "%";
+function renderQ() {
+  const q = currentQ();
+  const pos = currentPos();
+  const total = currentTotal();
 
-  // Header
-  document.getElementById("q-counter").textContent = `Question ${APP_STATE.current + 1} of ${total}`;
-  const badge = document.getElementById("topic-badge");
-  badge.textContent = TOPIC_NAMES[q.topic];
-  badge.className = "topic-badge " + TOPIC_BADGE[q.topic];
+  setProgress(((pos + 1) / total) * 100);
 
-  // Type hint
-  document.getElementById("q-type-hint").textContent =
-    q.type === "multi" ? "Select all that apply (multiple correct answers)" : "Select one answer";
+  // review banner
+  const rb = document.getElementById('review-banner');
+  if (S.isReview) {
+    rb.style.display = 'block';
+    document.getElementById('review-counter').textContent = (pos + 1) + ' of ' + total;
+  } else {
+    rb.style.display = 'none';
+  }
 
-  // Question text
-  document.getElementById("question-text").textContent = q.question;
+  document.getElementById('quiz-counter').textContent = 'Question ' + (pos + 1) + ' of ' + total;
+  document.getElementById('quiz-topic-badge').textContent = TOPIC_NAMES[q.topic] || q.topic;
+  document.getElementById('q-difficulty').textContent = q.difficulty || '';
+  document.getElementById('q-text').textContent = q.question;
+  document.getElementById('multi-hint').style.display = q.type === 'multi' ? 'block' : 'none';
 
-  // Choices
-  const list = document.getElementById("choices-list");
-  list.innerHTML = "";
-
-  const saved = APP_STATE.answers[q.id];
-  const submitted = !!saved;
-
-  q.choices.forEach((choice, idx) => {
-    const card = document.createElement("div");
-    card.className = "choice-card";
-    card.onclick = () => !submitted && toggleChoice(idx);
-
-    const ind = document.createElement("div");
-    ind.className = "choice-indicator";
-    ind.textContent = String.fromCharCode(65 + idx);
-
-    const lbl = document.createElement("div");
-    lbl.className = "choice-label";
-    lbl.textContent = choice;
-
-    card.appendChild(ind);
-    card.appendChild(lbl);
-
-    if (submitted && APP_STATE.mode === "study") {
-      const isCorrect = q.correct.includes(idx);
-      const wasSelected = saved.selected.includes(idx);
-      if (isCorrect) {
-        card.classList.add(wasSelected ? "correct" : "show-correct");
-        ind.textContent = "✓";
-      } else if (wasSelected) {
-        card.classList.add("incorrect");
-        ind.textContent = "✗";
-      }
-    } else if (!submitted && APP_STATE.selectedChoices.includes(idx)) {
-      card.classList.add("selected");
-    }
-
-    list.appendChild(card);
+  // choices
+  const list = document.getElementById('choices-list');
+  list.innerHTML = '';
+  q.choices.forEach((c, i) => {
+    const li = document.createElement('li');
+    li.className = 'choice-item';
+    li.dataset.i = i;
+    li.innerHTML = '<span class="choice-letter">' + String.fromCharCode(65+i) + '</span><span>' + escHtml(c) + '</span>';
+    if (!S.isReview) li.onclick = () => toggleChoice(i);
+    list.appendChild(li);
   });
 
-  // Actions
-  const btnSubmit = document.getElementById("btn-submit");
-  const btnPrev = document.getElementById("btn-prev");
-  const btnNext = document.getElementById("btn-next");
-  const feedbackBox = document.getElementById("feedback-box");
+  // explanation
+  const expBox = document.getElementById('explanation-box');
+  expBox.classList.remove('visible');
+  document.getElementById('explanation-text').textContent = '';
 
-  if (APP_STATE.mode === "exam") {
-    btnPrev.style.display = "none";
-    btnNext.style.display = "none";
-    btnSubmit.style.display = "block";
-    btnSubmit.textContent = APP_STATE.current < total - 1 ? "Next Question →" : "Finish Exam";
-    btnSubmit.disabled = APP_STATE.selectedChoices.length === 0 && !submitted;
-    feedbackBox.style.display = "none";
-  } else {
-    // Study mode
-    btnPrev.style.display = "block";
-    btnPrev.disabled = APP_STATE.current === 0;
+  const btnSubmit = document.getElementById('btn-submit');
+  const btnNext = document.getElementById('btn-next');
 
-    if (submitted) {
-      btnSubmit.style.display = "none";
-      btnNext.style.display = "block";
-      btnNext.textContent = APP_STATE.current < total - 1 ? "Next →" : "See Results";
-
-      // Show feedback
-      const wasCorrect = checkAnswer(q, saved.selected);
-      feedbackBox.style.display = "block";
-      feedbackBox.className = "feedback-box " + (wasCorrect ? "correct-fb" : "incorrect-fb");
-      feedbackBox.innerHTML =
-        `<div class="fb-result">${wasCorrect ? "✓ Correct!" : "✗ Incorrect"}</div>` +
-        `<div class="fb-explanation">${q.explanation}</div>`;
+  if (S.isReview) {
+    btnSubmit.style.display = 'none';
+    showReviewFeedback(q);
+    const isLast = pos >= total - 1;
+    btnNext.style.display = 'inline-flex';
+    if (isLast) {
+      btnNext.textContent = 'Back to Results';
+      btnNext.onclick = showResults;
     } else {
-      btnSubmit.style.display = "block";
-      btnSubmit.textContent = "Submit Answer";
-      btnSubmit.disabled = APP_STATE.selectedChoices.length === 0;
-      btnNext.style.display = "none";
-      feedbackBox.style.display = "none";
+      btnNext.textContent = 'Next Question';
+      btnNext.onclick = nextQ;
     }
-  }
-}
-
-function toggleChoice(idx) {
-  const qs = APP_STATE.reviewMode ? APP_STATE.reviewQuestions : APP_STATE.questions;
-  const q = qs[APP_STATE.current];
-  if (q.type === "single") {
-    APP_STATE.selectedChoices = [idx];
   } else {
-    const pos = APP_STATE.selectedChoices.indexOf(idx);
-    if (pos === -1) APP_STATE.selectedChoices.push(idx);
-    else APP_STATE.selectedChoices.splice(pos, 1);
+    S.selected = [];
+    S.submitted = false;
+    btnSubmit.style.display = 'inline-flex';
+    btnNext.style.display = 'none';
+    btnNext.textContent = 'Next Question';
+    btnNext.onclick = nextQ;
   }
-  renderQuestion();
 }
 
-// ═══════════════════════════════════════════════════════════
-//  ANSWER CHECKING
-// ═══════════════════════════════════════════════════════════
-function checkAnswer(q, selected) {
-  if (selected.length !== q.correct.length) return false;
-  const sortedSel = [...selected].sort();
-  const sortedCorr = [...q.correct].sort();
-  return sortedSel.every((v, i) => v === sortedCorr[i]);
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleChoice(i) {
+  if (S.submitted) return;
+  const q = currentQ();
+  if (q.type === 'multi') {
+    const idx = S.selected.indexOf(i);
+    if (idx === -1) S.selected.push(i); else S.selected.splice(idx, 1);
+  } else {
+    S.selected = [i];
+  }
+  document.querySelectorAll('.choice-item').forEach((el, ci) => {
+    el.classList.toggle('selected', S.selected.includes(ci));
+  });
 }
 
 function submitAnswer() {
-  const qs = APP_STATE.reviewMode ? APP_STATE.reviewQuestions : APP_STATE.questions;
-  const q = qs[APP_STATE.current];
-  const total = qs.length;
+  if (S.submitted) return;
+  const q = currentQ();
 
-  if (APP_STATE.mode === "exam") {
-    // In exam mode: record answer if any selected, always advance
-    if (APP_STATE.selectedChoices.length > 0 && !APP_STATE.answers[q.id]) {
-      APP_STATE.answers[q.id] = { selected: [...APP_STATE.selectedChoices] };
+  if (S.selected.length === 0) {
+    if (S.mode === 'exam') {
+      S.results.push({q, selected:[], correct:false});
+      advanceQ();
+      return;
     }
-    APP_STATE.selectedChoices = [];
-    if (APP_STATE.current < total - 1) {
-      APP_STATE.current++;
-      renderQuestion();
-    } else {
-      showResults();
-    }
+    alert('Please select at least one answer.');
     return;
   }
 
-  // Study mode: record answer
-  if (APP_STATE.selectedChoices.length === 0) return;
-  APP_STATE.answers[q.id] = { selected: [...APP_STATE.selectedChoices] };
-  APP_STATE.selectedChoices = [];
+  S.submitted = true;
+  const sel = [...S.selected].sort((a,b)=>a-b);
+  const ans = [...q.correct].sort((a,b)=>a-b);
+  const isCorrect = sel.length === ans.length && sel.every((v,i) => v === ans[i]);
+  S.results.push({q, selected:[...S.selected], correct:isCorrect});
 
-  if (APP_STATE.reviewMode) {
-    renderQuestion();
-    return;
-  }
-  renderQuestion();
-}
-
-function goQuestion(dir) {
-  const qs = APP_STATE.reviewMode ? APP_STATE.reviewQuestions : APP_STATE.questions;
-  const newIdx = APP_STATE.current + dir;
-  if (newIdx < 0 || newIdx >= qs.length) {
-    if (newIdx >= qs.length && APP_STATE.mode === "study") {
-      // "See Results" button
-      showResults();
-    }
-    return;
-  }
-  APP_STATE.current = newIdx;
-  APP_STATE.selectedChoices = [];
-  renderQuestion();
-}
-
-// Override Next button for study mode results trigger
-document.getElementById("btn-next").addEventListener("click", function() {
-  const qs = APP_STATE.reviewMode ? APP_STATE.reviewQuestions : APP_STATE.questions;
-  if (APP_STATE.current >= qs.length - 1) {
-    if (APP_STATE.reviewMode) {
-      showResults();
-    } else {
-      showResults();
-    }
+  if (S.mode === 'study') {
+    showStudyFeedback(q);
+    document.getElementById('btn-submit').style.display = 'none';
+    const btnNext = document.getElementById('btn-next');
+    btnNext.style.display = 'inline-flex';
+    const isLast = S.idx >= S.questions.length - 1;
+    btnNext.textContent = isLast ? 'See Results' : 'Next Question';
   } else {
-    APP_STATE.current++;
-    APP_STATE.selectedChoices = [];
-    renderQuestion();
+    advanceQ();
   }
-});
+}
 
-// ═══════════════════════════════════════════════════════════
-//  RESULTS
-// ═══════════════════════════════════════════════════════════
+function showStudyFeedback(q) {
+  const sel = S.selected;
+  document.querySelectorAll('.choice-item').forEach((el, ci) => {
+    el.classList.add('disabled');
+    const inSel = sel.includes(ci);
+    const inAns = q.correct.includes(ci);
+    if (inAns && inSel) el.classList.add('correct');
+    else if (inSel && !inAns) el.classList.add('wrong');
+    else if (inAns) el.classList.add('show-correct');
+  });
+  document.getElementById('explanation-text').textContent = q.explanation;
+  document.getElementById('explanation-box').classList.add('visible');
+}
+
+function showReviewFeedback(q) {
+  const result = S.results.find(r => r.q.id === q.id);
+  const selected = result ? result.selected : [];
+  document.querySelectorAll('.choice-item').forEach((el, ci) => {
+    el.classList.add('disabled');
+    if (q.correct.includes(ci)) el.classList.add('show-correct');
+    else if (selected.includes(ci)) el.classList.add('wrong');
+  });
+  document.getElementById('explanation-text').textContent = q.explanation;
+  document.getElementById('explanation-box').classList.add('visible');
+}
+
+function nextQ() {
+  if (S.isReview) {
+    if (S.reviewIdx >= S.reviewQueue.length - 1) { showResults(); return; }
+    S.reviewIdx++;
+    renderQ();
+    return;
+  }
+  advanceQ();
+}
+
+function advanceQ() {
+  if (S.idx >= S.questions.length - 1) { endSession(); return; }
+  S.idx++;
+  S.selected = [];
+  S.submitted = false;
+  renderQ();
+}
+
+// ==================== END SESSION ====================
+function endSession() {
+  stopTimer();
+  S.elapsedSecs = Math.floor((Date.now() - S.sessionStart) / 1000);
+  showResults();
+}
+
+// ==================== RESULTS ====================
 function showResults() {
-  if (APP_STATE.timerInterval) {
-    clearInterval(APP_STATE.timerInterval);
-    APP_STATE.timerInterval = null;
-  }
+  const res = S.results;
+  const total = res.length;
+  const correct = res.filter(r => r.correct).length;
+  const pct = total > 0 ? (correct / total) * 100 : 0;
+  const passed = pct >= PASS_THRESHOLD;
 
-  const qs = APP_STATE.reviewMode ? APP_STATE.reviewQuestions : APP_STATE.questions;
-  let correct = 0;
-  const topicStats = {};
+  persistBestScore(pct);
 
-  qs.forEach(q => {
-    const ans = APP_STATE.answers[q.id];
-    const isCorrect = ans ? checkAnswer(q, ans.selected) : false;
-    if (isCorrect) correct++;
-    if (!topicStats[q.topic]) topicStats[q.topic] = { correct: 0, total: 0 };
-    topicStats[q.topic].total++;
-    if (isCorrect) topicStats[q.topic].correct++;
+  const badge = document.getElementById('pass-badge');
+  badge.textContent = passed ? 'PASS' : 'FAIL';
+  badge.className = 'pass-badge ' + (passed ? 'pass' : 'fail');
+
+  const circle = document.getElementById('score-circle');
+  circle.textContent = pct.toFixed(1) + '%';
+  circle.className = 'score-circle ' + (passed ? 'pass' : 'fail');
+
+  document.getElementById('score-subtitle').textContent = correct + ' / ' + total + ' correct';
+  document.getElementById('res-correct').textContent = correct;
+  document.getElementById('res-wrong').textContent = total - correct;
+  document.getElementById('res-total').textContent = total;
+  document.getElementById('res-time').textContent = fmt(S.elapsedSecs);
+
+  // topic breakdown
+  const stats = {};
+  Object.keys(TOPIC_NAMES).forEach(t => { stats[t] = {c:0, t:0}; });
+  res.forEach(r => {
+    const t = r.q.topic;
+    if (!stats[t]) stats[t] = {c:0, t:0};
+    stats[t].t++;
+    if (r.correct) stats[t].c++;
   });
 
-  const total = qs.length;
-  const pct = total > 0 ? Math.round(correct / total * 100) : 0;
-  const passed = pct >= 63;
-
-  // Score display
-  document.getElementById("res-score").textContent = `${correct} / ${total} — ${pct}%`;
-  document.getElementById("res-badge").innerHTML = passed
-    ? '<span class="pass-badge">PASS ✓</span>'
-    : '<span class="fail-badge">FAIL ✗</span>';
-
-  // Topic breakdown
-  const breakdownEl = document.getElementById("topic-breakdown");
-  breakdownEl.innerHTML = "";
-  const weakTopics = [];
-
-  for (const [topic, label] of Object.entries(TOPIC_NAMES)) {
-    const ts = topicStats[topic];
-    if (!ts) continue;
-    const tPct = Math.round(ts.correct / ts.total * 100);
-    if (tPct < 70) weakTopics.push(label);
-    const barClass = tPct >= 80 ? "strong" : tPct >= 60 ? "ok" : "weak";
-    breakdownEl.innerHTML += `
-      <div class="topic-breakdown-row">
-        <div class="tbr-header">
-          <span class="tbr-name">${label}</span>
-          <span class="tbr-score" style="color:${tPct>=70?'#3fb950':tPct>=50?'#58a6ff':'#f87171'}">${ts.correct}/${ts.total} (${tPct}%)</span>
-        </div>
-        <div class="tbr-bar-wrap"><div class="tbr-bar ${barClass}" style="width:${tPct}%"></div></div>
-      </div>`;
-  }
-
-  // Weak areas
-  const weakSection = document.getElementById("weak-areas-section");
-  const weakList = document.getElementById("weak-areas-list");
-  if (weakTopics.length > 0) {
-    weakSection.style.display = "block";
-    weakList.innerHTML = weakTopics.map(t => `<span class="weak-area-tag">${t}</span>`).join("");
-  } else {
-    weakSection.style.display = "none";
-  }
-
-  // Save progress
-  const p = loadProgress();
-  if (!p.bestScore || pct > p.bestScore) {
-    p.bestScore = pct;
-    p.bestScoreDate = new Date().toLocaleDateString();
-  }
-  p.completedSessions = (p.completedSessions || 0) + 1;
-  if (!p.topicStats) p.topicStats = {};
-  for (const [topic, ts] of Object.entries(topicStats)) {
-    if (!p.topicStats[topic]) p.topicStats[topic] = { correct: 0, total: 0 };
-    p.topicStats[topic].correct += ts.correct;
-    p.topicStats[topic].total += ts.total;
-  }
-  saveProgress(p);
-
-  // Store weak topic slugs for Practice Weak Topics button
-  APP_STATE._weakTopicSlugs = Object.entries(topicStats)
-    .filter(([t, ts]) => Math.round(ts.correct / ts.total * 100) < 70)
-    .map(([t]) => t);
-
-  showScreen("results-screen");
-}
-
-function reviewWrong() {
-  const qs = APP_STATE.reviewMode ? APP_STATE.reviewQuestions : APP_STATE.questions;
-  const wrong = qs.filter(q => {
-    const ans = APP_STATE.answers[q.id];
-    return !ans || !checkAnswer(q, ans.selected);
+  const cont = document.getElementById('topic-breakdown-results');
+  cont.innerHTML = '';
+  Object.entries(stats).forEach(([topic, st]) => {
+    if (st.t === 0) return;
+    const p = (st.c / st.t) * 100;
+    const weak = p < 70;
+    const div = document.createElement('div');
+    div.className = 'topic-result-row';
+    div.innerHTML =
+      '<div class="topic-result-header">' +
+        '<span>' + (TOPIC_NAMES[topic] || topic) + '</span>' +
+        '<span class="pct ' + (weak ? 'weak' : 'ok') + '">' + p.toFixed(0) + '% (' + st.c + '/' + st.t + ')</span>' +
+      '</div>' +
+      '<div class="bar-track"><div class="bar-fill ' + (weak ? 'weak' : 'ok') + '" style="width:' + p + '%"></div></div>' +
+      (weak ? '<div class="weak-label">Needs improvement (&lt;70%)</div>' : '');
+    cont.appendChild(div);
   });
-  if (wrong.length === 0) {
-    alert("No incorrect answers to review. Great job!");
-    return;
-  }
-  APP_STATE.reviewMode = true;
-  APP_STATE.reviewQuestions = wrong;
-  APP_STATE.current = 0;
-  APP_STATE.selectedChoices = [];
-  // Keep answers so feedback shows
-  APP_STATE.mode = "study";
-  document.getElementById("review-banner").style.display = "flex";
-  document.getElementById("timer-display").style.display = "none";
-  showScreen("quiz-screen");
-  renderQuestion();
+
+  const wrongCount = res.filter(r => !r.correct).length;
+  document.getElementById('btn-review-wrong').style.display = wrongCount > 0 ? 'inline-flex' : 'none';
+
+  setProgress(100);
+  showScreen('results');
 }
 
-function practiceWeak() {
-  const slugs = APP_STATE._weakTopicSlugs || [];
-  if (slugs.length === 0) {
-    alert("No weak topics detected (all topics ≥ 70%). Keep it up!");
-    return;
-  }
-  APP_STATE.reviewMode = false;
-  APP_STATE.mode = "study";
-  APP_STATE.questions = shuffle(QUESTIONS.filter(q => slugs.includes(q.topic)));
-  APP_STATE.current = 0;
-  APP_STATE.answers = {};
-  APP_STATE.selectedChoices = {};
-  APP_STATE.selectedChoices = [];
-  if (APP_STATE.timerInterval) clearInterval(APP_STATE.timerInterval);
-  APP_STATE.timerInterval = null;
-  document.getElementById("timer-display").style.display = "none";
-  document.getElementById("review-banner").style.display = "none";
-  showScreen("quiz-screen");
-  renderQuestion();
+// ==================== REVIEW WRONG ====================
+function startReview() {
+  const wrong = S.results.filter(r => !r.correct);
+  if (wrong.length === 0) return;
+  S.isReview = true;
+  S.reviewQueue = wrong.map(r => r.q);
+  S.reviewIdx = 0;
+  document.getElementById('timer-display').style.display = 'none';
+  showScreen('quiz');
+  renderQ();
 }
 
-// ═══════════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════════
-updateStatsUI();
+// ==================== INIT ====================
+showHome();
 </script>
 </body>
 </html>
